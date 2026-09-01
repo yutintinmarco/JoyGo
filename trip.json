@@ -1,0 +1,24 @@
+{
+  "bootstrapOnly": true,
+  "schemaVersion": 2,
+  "revision": 1,
+  "meta": {
+    "titleSmall": "",
+    "titleMain": "",
+    "dateRange": "",
+    "tripStartIso": "",
+    "tripEndIso": "",
+    "travellers": {},
+    "cities": {},
+    "flights": [],
+    "accommodations": [],
+    "hotels": {},
+    "expenses": {
+      "enabled": false
+    }
+  },
+  "days": [],
+  "snacks": {
+    "items": []
+  }
+}

@@ -1,0 +1,481 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function authEmail() {
+      return signedIn() && request.auth.token.email is string
+        ? request.auth.token.email.lower()
+        : "";
+    }
+    function tripPath(tripId) { return /databases/$(database)/documents/trips/$(tripId); }
+    function memberPath(tripId, uid) { return /databases/$(database)/documents/trips/$(tripId)/members/$(uid); }
+    function invitePath(inviteId) { return /databases/$(database)/documents/tripInvites/$(inviteId); }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function adminPath(uid) { return /databases/$(database)/documents/appAdmins/$(uid); }
+    function creatorPath(uid) { return /databases/$(database)/documents/authorizedTripCreators/$(uid); }
+    function tripIdPath(tripId) { return /databases/$(database)/documents/tripIds/$(tripId); }
+    function expenseSettingsPath(tripId) { return /databases/$(database)/documents/trips/$(tripId)/settings/expenses; }
+    function validInviteRole(role) { return role in ['admin', 'member', 'viewer']; }
+    function isAppAdmin() {
+      return signedIn()
+        && exists(adminPath(request.auth.uid))
+        && get(adminPath(request.auth.uid)).data.enabled == true;
+    }
+    function isAuthorizedTripCreator() {
+      return signedIn()
+        && (isAppAdmin()
+          || (exists(creatorPath(request.auth.uid))
+            && get(creatorPath(request.auth.uid)).data.enabled == true));
+    }
+    function validCreatorGrant(uid, data) {
+      return data.keys().hasAll([
+          'uid', 'enabled', 'email', 'displayName', 'photoURL', 'grantedBy', 'grantedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'enabled', 'email', 'displayName', 'photoURL', 'grantedBy', 'grantedAt'
+        ])
+        && data.uid is string
+        && data.uid == uid
+        && data.enabled == true
+        && data.email is string
+        && data.email == data.email.lower().trim()
+        && data.displayName is string
+        && data.photoURL is string
+        && data.grantedBy is string
+        && data.grantedBy == request.auth.uid
+        && data.grantedAt is timestamp
+        && exists(userPath(uid))
+        && get(userPath(uid)).data.email == data.email;
+    }
+
+    function canReadTrip(tripId) {
+      return signedIn()
+        && request.auth.uid in get(tripPath(tripId)).data.memberUids;
+    }
+    function roleFor(tripId) {
+      return signedIn() && exists(memberPath(tripId, request.auth.uid))
+        ? get(memberPath(tripId, request.auth.uid)).data.role
+        : null;
+    }
+    function canManageTrip(tripId) {
+      return canReadTrip(tripId) && roleFor(tripId) in ['owner', 'admin'];
+    }
+    function isOwner(tripId) {
+      return canReadTrip(tripId) && roleFor(tripId) == 'owner';
+    }
+    function isTripDeleting(tripId) {
+      return exists(tripPath(tripId)) && get(tripPath(tripId)).data.get('deletionState', '') == 'deleting';
+    }
+    function isGlobalLocked(tripId) {
+      return exists(tripPath(tripId)) && get(tripPath(tripId)).data.get('globalLocked', false) == true;
+    }
+    function isExpenseLocked(tripId) {
+      return exists(expenseSettingsPath(tripId)) && get(expenseSettingsPath(tripId)).data.get('expenseLocked', false) == true;
+    }
+    function canEditTripContent(tripId) {
+      return canManageTrip(tripId) && !isTripDeleting(tripId) && !isGlobalLocked(tripId);
+    }
+    function canUseExpenses(tripId) {
+      return canReadTrip(tripId) && roleFor(tripId) in ['owner', 'admin', 'member'];
+    }
+    function canModifyExpenses(tripId) {
+      return canUseExpenses(tripId) && !isTripDeleting(tripId) && !isGlobalLocked(tripId) && !isExpenseLocked(tripId);
+    }
+    function canModifySettlements(tripId) {
+      return canUseExpenses(tripId) && !isTripDeleting(tripId) && !isGlobalLocked(tripId);
+    }
+    function isGlobalLockTripUpdate(tripId) {
+      return canManageTrip(tripId)
+        && !isTripDeleting(tripId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.memberUids == resource.data.memberUids
+        && request.resource.data.memberCount == resource.data.memberCount
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'globalLocked', 'globalLockedAt', 'globalLockedBy', 'globalLockedByName',
+          'globalUnlockedAt', 'globalUnlockedBy', 'globalUnlockedByName',
+          'updatedAt', 'updatedBy'
+        ]);
+    }
+    function isExpenseLockSettingsUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'expenseLocked', 'expenseLockedAt', 'expenseLockedBy', 'expenseLockedByName',
+        'expenseUnlockedAt', 'expenseUnlockedBy', 'expenseUnlockedByName',
+        'updatedAt', 'updatedBy'
+      ]);
+    }
+    function canAssignInviteRole(tripId, role) {
+      return !isTripDeleting(tripId)
+        && ((isOwner(tripId) && validInviteRole(role))
+          || (canReadTrip(tripId) && roleFor(tripId) == 'admin' && role in ['member', 'viewer']));
+    }
+    function memberListValid(data) {
+      return data.memberUids is list
+        && data.memberCount is int
+        && data.memberUids.size() == data.memberUids.toSet().size()
+        && data.memberCount == data.memberUids.size();
+    }
+    function pendingInviteMatchesAuth(inviteId, tripId, role) {
+      return exists(invitePath(inviteId))
+        && get(invitePath(inviteId)).data.status == 'pending'
+        && get(invitePath(inviteId)).data.tripId == tripId
+        && get(invitePath(inviteId)).data.role == role
+        && get(invitePath(inviteId)).data.emailLower == authEmail();
+    }
+    function isSelfJoinTripUpdate(tripId) {
+      let added = request.resource.data.memberUids.removeAll(resource.data.memberUids);
+      let removed = resource.data.memberUids.removeAll(request.resource.data.memberUids);
+      return signedIn()
+        && !isTripDeleting(tripId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['memberUids', 'memberCount', 'updatedBy', 'updatedAt'])
+        && added.size() == 1
+        && added[0] == request.auth.uid
+        && removed.size() == 0
+        && request.resource.data.memberCount == resource.data.memberCount + 1
+        && memberListValid(request.resource.data)
+        && existsAfter(memberPath(tripId, request.auth.uid))
+        && getAfter(memberPath(tripId, request.auth.uid)).data.uid == request.auth.uid
+        && validInviteRole(getAfter(memberPath(tripId, request.auth.uid)).data.role)
+        && getAfter(memberPath(tripId, request.auth.uid)).data.inviteId is string
+        && pendingInviteMatchesAuth(
+          getAfter(memberPath(tripId, request.auth.uid)).data.inviteId,
+          tripId,
+          getAfter(memberPath(tripId, request.auth.uid)).data.role
+        );
+    }
+    function isManagerMemberRemoval(tripId) {
+      let added = request.resource.data.memberUids.removeAll(resource.data.memberUids);
+      let removed = resource.data.memberUids.removeAll(request.resource.data.memberUids);
+      return canManageTrip(tripId)
+        && !isTripDeleting(tripId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['memberUids', 'memberCount', 'updatedBy', 'updatedAt'])
+        && added.size() == 0
+        && removed.size() == 1
+        && request.resource.data.memberCount == resource.data.memberCount - 1
+        && get(memberPath(tripId, removed[0])).data.role != 'owner'
+        && !existsAfter(memberPath(tripId, removed[0]))
+        && memberListValid(request.resource.data);
+    }
+    function managerCanModifyMember(tripId, currentRole, nextRole) {
+      return !isTripDeleting(tripId)
+        && ((isOwner(tripId) && currentRole != 'owner' && nextRole in ['admin', 'member', 'viewer'])
+        || (canReadTrip(tripId) && roleFor(tripId) == 'admin'
+          && currentRole in ['member', 'viewer'] && nextRole in ['member', 'viewer']));
+    }
+    function managerCanDeleteMember(tripId, targetRole) {
+      return !isTripDeleting(tripId)
+        && ((isOwner(tripId) && targetRole != 'owner')
+          || (canReadTrip(tripId) && roleFor(tripId) == 'admin' && targetRole in ['member', 'viewer']));
+    }
+    function allowedMemberActivity(actionType) {
+      return actionType in [
+        'expense_created','expense_updated','expense_deleted','expense_restored',
+        'settlement_recorded','settlement_cancelled'
+      ];
+    }
+
+    match /users/{uid} {
+      // Users keep ownership of their own profile. App Admin may read the
+      // minimal profile directory only to resolve a Google email to a UID when
+      // granting Trip Creator entitlement inside the WebApp.
+      allow get, list: if signedIn() && (request.auth.uid == uid || isAppAdmin());
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.email is string
+        && request.resource.data.email == authEmail();
+      allow delete: if false;
+    }
+
+
+    match /users/{uid}/preferences/{preferenceId} {
+      allow read, create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Phase 2G.2 Personal Archive is a per-user preference, not Trip state.
+    match /users/{uid}/tripPreferences/{tripId} {
+      allow read, list: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && !isTripDeleting(tripId)
+        && canReadTrip(tripId)
+        && request.resource.data.keys().hasAll(['tripId', 'archived', 'archivedAt', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['tripId', 'archived', 'archivedAt', 'updatedAt'])
+        && request.resource.data.tripId == tripId
+        && request.resource.data.archived is bool
+        && (request.resource.data.archivedAt == null || request.resource.data.archivedAt is timestamp)
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if signedIn() && request.auth.uid == uid && !isTripDeleting(tripId);
+    }
+
+    // Phase 2G.1 completion · global App Admin bootstrap. App Admin records are
+    // intentionally NOT client-manageable. The first trusted UID is seeded once
+    // from Firebase Console; Creator management can then stay inside the WebApp.
+    match /appAdmins/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAppAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    // Global entitlement to create a brand-new Firebase Trip. A user may inspect
+    // only their own entitlement; App Admin may list and manage the allowlist.
+    match /authorizedTripCreators/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAppAdmin());
+      allow list: if isAppAdmin();
+      allow create, update: if isAppAdmin() && validCreatorGrant(uid, request.resource.data);
+      allow delete: if isAppAdmin();
+    }
+
+    // Privacy-preserving canonical Trip ID registry. It stores reservation only,
+    // never Trip title, owner identity, members or itinerary metadata.
+    match /tripIds/{tripId} {
+      allow get: if signedIn() && (isAuthorizedTripCreator() || isOwner(tripId));
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll(['tripId', 'status', 'reservedBy', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['tripId', 'status', 'reservedBy', 'createdAt'])
+        && request.resource.data.tripId == tripId
+        && request.resource.data.status == 'active'
+        && request.resource.data.reservedBy == request.auth.uid
+        && (
+          // New Trip: registry + root + Owner membership are one atomic batch.
+          (isAuthorizedTripCreator()
+            && existsAfter(tripPath(tripId))
+            && getAfter(tripPath(tripId)).data.createdBy == request.auth.uid
+            && request.auth.uid in getAfter(tripPath(tripId)).data.memberUids
+            && existsAfter(memberPath(tripId, request.auth.uid))
+            && getAfter(memberPath(tripId, request.auth.uid)).data.role == 'owner')
+          ||
+          // Existing pre-2G Trip: current Owner may lazily backfill its registry.
+          isOwner(tripId)
+        );
+      allow update, delete: if false;
+    }
+
+    match /tripInvites/{inviteId} {
+      allow read: if signedIn() && (
+        canManageTrip(resource.data.tripId)
+        || resource.data.emailLower == authEmail()
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll([
+          'inviteId', 'tripId', 'tripTitle', 'email', 'emailLower',
+          'role', 'status', 'invitedBy', 'invitedByName', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'inviteId', 'tripId', 'tripTitle', 'tripDateRange', 'tripIcon',
+          'email', 'emailLower', 'role', 'status',
+          'invitedBy', 'invitedByName', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.inviteId == inviteId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.invitedBy == request.auth.uid
+        && request.resource.data.emailLower == request.resource.data.email.lower().trim()
+        && validInviteRole(request.resource.data.role)
+        && canAssignInviteRole(request.resource.data.tripId, request.resource.data.role);
+
+      allow update: if signedIn()
+        && !isTripDeleting(resource.data.tripId)
+        && resource.data.status == 'pending'
+        && resource.data.emailLower == authEmail()
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.emailLower == resource.data.emailLower
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.invitedBy == resource.data.invitedBy
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'acceptedBy', 'acceptedAt', 'declinedBy', 'declinedAt', 'updatedAt'])
+        && (
+          (request.resource.data.status == 'accepted' && request.resource.data.acceptedBy == request.auth.uid)
+          || (request.resource.data.status == 'declined' && request.resource.data.declinedBy == request.auth.uid)
+        );
+
+      allow delete: if signedIn() && canManageTrip(resource.data.tripId) && !isTripDeleting(resource.data.tripId);
+    }
+
+    match /trips/{tripId} {
+      allow create: if isAuthorizedTripCreator()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.auth.uid in request.resource.data.memberUids
+        && memberListValid(request.resource.data)
+        && request.resource.data.memberUids.size() == 1
+        && request.resource.data.memberUids[0] == request.auth.uid
+        && request.resource.data.memberCount == 1
+        && existsAfter(tripIdPath(tripId))
+        && getAfter(tripIdPath(tripId)).data.tripId == tripId
+        && getAfter(tripIdPath(tripId)).data.status == 'active'
+        && getAfter(tripIdPath(tripId)).data.reservedBy == request.auth.uid;
+
+      // Phase 2F: arbitrary signed-in users can no longer probe private Trip metadata.
+      allow get: if canReadTrip(tripId);
+      allow list: if signedIn() && request.auth.uid in resource.data.memberUids;
+
+      allow update: if request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          isGlobalLockTripUpdate(tripId)
+          || (canEditTripContent(tripId)
+            && request.resource.data.memberUids == resource.data.memberUids
+            && request.resource.data.memberCount == resource.data.memberCount)
+          || isManagerMemberRemoval(tripId)
+          || isSelfJoinTripUpdate(tripId)
+        );
+
+      // Phase 2G.3: Trip root deletion is server-orchestrated only.
+      allow delete: if false;
+
+      match /members/{uid} {
+        allow read: if canReadTrip(tripId);
+
+        allow create: if signedIn() && (
+          // First-import Owner bootstrap.
+          (uid == request.auth.uid
+            && request.resource.data.role == 'owner'
+            && request.resource.data.uid == request.auth.uid
+            && request.auth.uid in getAfter(tripPath(tripId)).data.memberUids
+            && getAfter(tripPath(tripId)).data.createdBy == request.auth.uid)
+          ||
+          // Invite acceptance.
+          (uid == request.auth.uid
+            && !isTripDeleting(tripId)
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.status == 'active'
+            && request.resource.data.email == authEmail()
+            && validInviteRole(request.resource.data.role)
+            && request.resource.data.inviteId is string
+            && pendingInviteMatchesAuth(request.resource.data.inviteId, tripId, request.resource.data.role)
+            && request.auth.uid in getAfter(tripPath(tripId)).data.memberUids)
+        );
+
+        allow update: if signedIn()
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['role', 'updatedBy', 'updatedAt'])
+          && managerCanModifyMember(tripId, resource.data.role, request.resource.data.role);
+
+        allow delete: if signedIn()
+          && uid != request.auth.uid
+          && managerCanDeleteMember(tripId, resource.data.role);
+      }
+
+      match /days/{dayId} {
+        allow read: if canReadTrip(tripId);
+        allow create, update, delete: if canEditTripContent(tripId);
+        match /items/{itemId} {
+          allow read: if canReadTrip(tripId);
+          allow create, update, delete: if canEditTripContent(tripId);
+        }
+      }
+
+      match /savedPlaces/{placeId} {
+        allow read: if canReadTrip(tripId);
+        allow create, update, delete: if canEditTripContent(tripId);
+      }
+
+      // Phase 3A.1 lightweight media registry. Storage bytes remain in
+      // Cloud Storage; this document keeps lifecycle metadata and stable paths.
+      match /media/{mediaId} {
+        allow read: if canReadTrip(tripId);
+        allow create: if canEditTripContent(tripId)
+          && request.resource.data.tripId == tripId
+          && request.resource.data.mediaId == mediaId
+          && request.resource.data.ownerType in ['trip', 'item', 'savedPlace']
+          && request.resource.data.status in ['uploading', 'ready']
+          && request.resource.data.storagePath is string
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if canEditTripContent(tripId)
+          && request.resource.data.tripId == resource.data.tripId
+          && request.resource.data.mediaId == resource.data.mediaId
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.ownerType in ['trip', 'item', 'savedPlace']
+          && request.resource.data.status in ['uploading', 'ready']
+          && request.resource.data.storagePath is string;
+        allow delete: if canEditTripContent(tripId);
+      }
+
+      match /settings/{settingId} {
+        allow read: if canReadTrip(tripId);
+        allow create: if
+          (settingId == 'expenses' && canManageTrip(tripId) && !isTripDeleting(tripId) && !isGlobalLocked(tripId))
+          || (settingId != 'expenses' && canEditTripContent(tripId));
+        allow update: if
+          (settingId == 'expenses'
+            && canManageTrip(tripId)
+            && !isTripDeleting(tripId)
+            && !isGlobalLocked(tripId)
+            && (!isExpenseLocked(tripId) || isExpenseLockSettingsUpdate()))
+          || (settingId != 'expenses' && canEditTripContent(tripId));
+        allow delete: if canEditTripContent(tripId);
+      }
+
+      match /snapshots/{snapshotId} {
+        allow read: if canManageTrip(tripId);
+        allow create: if canManageTrip(tripId)
+          && !isTripDeleting(tripId)
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if false;
+        // Snapshots remain append-only from the client. Permanent Trip cleanup
+        // is performed by the trusted server deletion orchestrator.
+        allow delete: if false;
+      }
+
+      // v7.7.4.5: high-risk import / restore coordination lives outside the
+      // Trip parent document so normal Trip writes cannot keep retrying the
+      // lock transaction. The document carries coordination metadata only.
+      match /operations/{operationId} {
+        allow read: if canManageTrip(tripId) && operationId == 'current';
+        allow create, update: if canEditTripContent(tripId)
+          && operationId == 'current'
+          && request.resource.data.keys().hasAll(['operationId', 'type', 'actorUid', 'startedAtMs', 'startedAt'])
+          && request.resource.data.keys().hasOnly(['operationId', 'type', 'actorUid', 'startedAtMs', 'startedAt'])
+          && request.resource.data.operationId is string
+          && request.resource.data.type in ['import', 'restore']
+          && request.resource.data.actorUid == request.auth.uid
+          && request.resource.data.startedAtMs is int;
+        allow delete: if signedIn()
+          && operationId == 'current'
+          && !isTripDeleting(tripId)
+          && (resource.data.actorUid == request.auth.uid || canManageTrip(tripId));
+      }
+
+      match /activityLogs/{logId} {
+        allow read: if canReadTrip(tripId);
+        allow create: if signedIn()
+          && !isTripDeleting(tripId)
+          && request.resource.data.actorUid == request.auth.uid
+          && (
+            canManageTrip(tripId)
+            || (canReadTrip(tripId) && request.resource.data.actionType == 'trip.member.accept')
+            || (roleFor(tripId) == 'member' && allowedMemberActivity(request.resource.data.actionType))
+          );
+        allow update, delete: if false;
+      }
+
+      match /expenses/{expenseId} {
+        allow read: if canReadTrip(tripId);
+        allow create: if canModifyExpenses(tripId)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.updatedBy == request.auth.uid;
+        allow update: if canModifyExpenses(tripId)
+          && request.resource.data.updatedBy == request.auth.uid;
+        // Expenses use soft delete for auditability.
+        allow delete: if false;
+      }
+
+      match /settlements/{settlementId} {
+        allow read: if canReadTrip(tripId);
+        allow create: if canModifySettlements(tripId)
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if canModifySettlements(tripId);
+        allow delete: if canModifySettlements(tripId);
+      }
+    }
+  }
+}

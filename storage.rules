@@ -1,0 +1,72 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function tripPath(tripId) {
+      return /databases/(default)/documents/trips/$(tripId);
+    }
+    function memberPath(tripId, uid) {
+      return /databases/(default)/documents/trips/$(tripId)/members/$(uid);
+    }
+    function canReadTripMedia(tripId) {
+      let trip = firestore.get(tripPath(tripId));
+      return signedIn()
+        && request.auth.uid in trip.data.memberUids;
+    }
+    function canWriteTripMedia(tripId) {
+      let trip = firestore.get(tripPath(tripId));
+      let member = firestore.get(memberPath(tripId, request.auth.uid));
+      return signedIn()
+        && request.auth.uid in trip.data.memberUids
+        && member.data.role in ['owner', 'admin']
+        && trip.data.get('deletionState', '') != 'deleting'
+        && trip.data.get('globalLocked', false) != true;
+    }
+    function validImageUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 6 * 1024 * 1024
+        && request.resource.contentType is string
+        && request.resource.contentType.matches('image/.*');
+    }
+    function validBookingDocumentUpload() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 20 * 1024 * 1024
+        && request.resource.contentType is string
+        && (
+          request.resource.contentType == 'application/pdf'
+          || request.resource.contentType.matches('image/(jpeg|jpg|png|webp|heic|heif)')
+        );
+    }
+
+    match /trips/{tripId}/media/{mediaPath=**} {
+      allow get: if canReadTripMedia(tripId);
+      allow create, update: if canWriteTripMedia(tripId) && validImageUpload();
+      allow delete: if canWriteTripMedia(tripId);
+    }
+
+    // v7.9.19.0 · Booking Documents. PDF / image reservation files are kept
+    // under the Trip prefix so Permanent Delete can remove them atomically with
+    // the rest of the Trip Storage lifecycle.
+    match /trips/{tripId}/documents/{documentPath=**} {
+      allow read: if canReadTripMedia(tripId);
+      allow create, update: if canWriteTripMedia(tripId) && validBookingDocumentUpload();
+      allow delete: if canWriteTripMedia(tripId);
+    }
+
+    // v7.9.18.0 · Shared read-only app assets. Airline logos are uploaded by
+    // the project owner through Firebase Console / trusted deployment tooling.
+    // They are not writable by the WebApp client.
+    match /app-assets/airlines/{fileName} {
+      allow get: if signedIn();
+      allow create, update, delete, list: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

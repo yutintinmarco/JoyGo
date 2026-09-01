@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 2,
+  "tripId": "joygo-demo-trip",
+  "revision": 1,
+  "meta": {
+    "titleSmall": "JoyGo Demo Trip",
+    "titleMain": "JoyGo <span class=\"title-accent\">·</span> Demo Trip ✨",
+    "accentColor": "#0A84FF",
+    "dateRange": "1月10日 至 1月11日",
+    "tripStartIso": "2030-01-10",
+    "tripEndIso": "2030-01-11",
+    "travellers": {
+      "team-a": {
+        "label": "Team A",
+        "members": "Alex、Sam",
+        "color": "#4A90D9"
+      },
+      "team-b": {
+        "label": "Team B",
+        "members": "Jamie",
+        "color": "#E8A838"
+      }
+    },
+    "cities": {
+      "tokyo": {
+        "label": "東京",
+        "latitude": 35.6762,
+        "longitude": 139.6503,
+        "timezone": "Asia/Tokyo",
+        "startIso": "2030-01-10",
+        "endIso": "2030-01-11"
+      }
+    },
+    "flights": [
+      {
+        "flightId": "flight_demo_entry",
+        "teamKey": "all",
+        "journeyRole": "entry",
+        "airlineCode": "JG",
+        "flightNumber": "JG101",
+        "departureDate": "2030-01-10",
+        "departureTime": "08:00",
+        "departureAirport": "HKG",
+        "arrivalDate": "2030-01-10",
+        "arrivalTime": "13:00",
+        "arrivalAirport": "HND",
+        "bookingReference": "DEMO01",
+        "note": "Fictional example only",
+        "itineraryEnabled": true,
+        "sortOrder": 0
+      },
+      {
+        "flightId": "flight_demo_exit",
+        "teamKey": "all",
+        "journeyRole": "exit",
+        "airlineCode": "JG",
+        "flightNumber": "JG102",
+        "departureDate": "2030-01-11",
+        "departureTime": "19:00",
+        "departureAirport": "HND",
+        "arrivalDate": "2030-01-11",
+        "arrivalTime": "23:00",
+        "arrivalAirport": "HKG",
+        "bookingReference": "DEMO02",
+        "note": "Fictional example only",
+        "itineraryEnabled": true,
+        "sortOrder": 1
+      }
+    ],
+    "accommodations": [
+      {
+        "accommodationId": "stay_demo_1",
+        "name": "JoyGo Demo Hotel",
+        "cityKey": "tokyo",
+        "teamKey": "all",
+        "checkInDate": "2030-01-10",
+        "checkInTime": "15:00",
+        "checkOutDate": "2030-01-11",
+        "checkOutTime": "11:00",
+        "address": "",
+        "mapsUrl": "",
+        "location": null,
+        "bookingReference": "DEMO-HOTEL",
+        "note": "Fictional accommodation example",
+        "itineraryCheckInEnabled": true,
+        "itineraryCheckOutEnabled": false,
+        "sortOrder": 0
+      }
+    ],
+    "expenses": {
+      "enabled": true,
+      "tripId": "joygo-demo-trip",
+      "title": "支出記錄",
+      "baseCurrency": "JPY",
+      "settlementCurrency": "JPY",
+      "defaultMembers": [
+        "Alex",
+        "Sam",
+        "Jamie"
+      ],
+      "currencies": [
+        "JPY",
+        "HKD",
+        "USD"
+      ],
+      "defaultExchangeRates": {
+        "JPY": 1,
+        "HKD": 19,
+        "USD": 150
+      },
+      "features": {
+        "quickAdd": true,
+        "splitMethod": true,
+        "ocr": true,
+        "excelExport": true,
+        "jsonBackup": true,
+        "activityLog": true
+      }
+    }
+  },
+  "days": [
+    {
+      "dayId": "day_20300110",
+      "label": "Day 1",
+      "date": "1月10日",
+      "title": "抵達東京",
+      "subtitle": "機場 · 淺草 · 澀谷",
+      "isoDate": "2030-01-10",
+      "city": "tokyo",
+      "cities": [
+        "tokyo"
+      ],
+      "sortOrder": 0,
+      "items": [
+        {
+          "itemId": "itm_demo_airport",
+          "kind": "stop",
+          "time": "13:00",
+          "icon": "✈️",
+          "title": "抵達羽田機場",
+          "note": "示範用抵達點",
+          "who": "all",
+          "popup": true,
+          "sortOrder": 0,
+          "mapMarkerVisible": false,
+          "location": {
+            "name": "Haneda Airport",
+            "placeId": "",
+            "latitude": 35.5494,
+            "longitude": 139.7798,
+            "address": "",
+            "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Haneda+Airport"
+          },
+          "images": []
+        },
+        {
+          "itemId": "itm_demo_transit",
+          "kind": "transit",
+          "time": "13:30",
+          "icon": "🚆",
+          "title": "前往市區",
+          "note": "示範 Transit item",
+          "who": "all",
+          "popup": false,
+          "sortOrder": 1,
+          "location": {
+            "name": "",
+            "placeId": "",
+            "latitude": null,
+            "longitude": null,
+            "address": "",
+            "mapsUrl": ""
+          },
+          "images": []
+        },
+        {
+          "itemId": "itm_demo_asakusa",
+          "kind": "stop",
+          "time": "15:00",
+          "icon": "⛩️",
+          "title": "淺草散步",
+          "note": "公開景點示範",
+          "who": "all",
+          "popup": true,
+          "sortOrder": 2,
+          "maps": "https://www.google.com/maps/search/?api=1&query=Asakusa+Tokyo",
+          "location": {
+            "name": "Asakusa",
+            "placeId": "",
+            "latitude": 35.7148,
+            "longitude": 139.7967,
+            "address": "Taito City, Tokyo",
+            "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Asakusa+Tokyo"
+          },
+          "images": [
+            {
+              "imageId": "img_demo_city",
+              "source": "static",
+              "src": "assets/gallery/demo_city.svg",
+              "sortOrder": 0
+            }
+          ]
+        },
+        {
+          "itemId": "itm_demo_shibuya",
+          "kind": "stop",
+          "time": "18:00",
+          "icon": "🌃",
+          "title": "澀谷",
+          "note": "公開景點示範",
+          "who": "team-a",
+          "popup": true,
+          "sortOrder": 3,
+          "maps": "https://www.google.com/maps/search/?api=1&query=Shibuya+Crossing+Tokyo",
+          "location": {
+            "name": "Shibuya Crossing",
+            "placeId": "",
+            "latitude": 35.6595,
+            "longitude": 139.7005,
+            "address": "Shibuya, Tokyo",
+            "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Shibuya+Crossing+Tokyo"
+          },
+          "images": [
+            {
+              "imageId": "img_demo_city_2",
+              "source": "static",
+              "src": "assets/gallery/demo_city.svg",
+              "sortOrder": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "dayId": "day_20300111",
+      "label": "Day 2",
+      "date": "1月11日",
+      "title": "自由活動",
+      "subtitle": "東京站 · 回程",
+      "isoDate": "2030-01-11",
+      "city": "tokyo",
+      "cities": [
+        "tokyo"
+      ],
+      "sortOrder": 1,
+      "items": [
+        {
+          "itemId": "itm_demo_station",
+          "kind": "stop",
+          "time": "10:00",
+          "icon": "🛍️",
+          "title": "東京站附近",
+          "note": "公開地點示範",
+          "who": "all",
+          "popup": true,
+          "sortOrder": 0,
+          "maps": "https://www.google.com/maps/search/?api=1&query=Tokyo+Station",
+          "location": {
+            "name": "Tokyo Station",
+            "placeId": "",
+            "latitude": 35.6812,
+            "longitude": 139.7671,
+            "address": "Chiyoda City, Tokyo",
+            "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tokyo+Station"
+          },
+          "images": [
+            {
+              "imageId": "img_demo_shop",
+              "source": "static",
+              "src": "assets/gallery/demo_shop.svg",
+              "sortOrder": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snacks": {
+    "items": [
+      {
+        "placeId": "place_demo_cafe",
+        "title": "Demo Cafe",
+        "category": "Cafe",
+        "city": "tokyo",
+        "sortOrder": 0,
+        "location": {
+          "name": "Demo Cafe",
+          "placeId": "",
+          "latitude": null,
+          "longitude": null,
+          "address": "",
+          "mapsUrl": ""
+        },
+        "images": [
+          {
+            "imageId": "img_demo_food",
+            "source": "static",
+            "src": "assets/gallery/demo_food.svg",
+            "sortOrder": 0
+          }
+        ]
+      }
+    ]
+  }
+}
