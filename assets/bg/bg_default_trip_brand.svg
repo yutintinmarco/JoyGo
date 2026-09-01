@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024" role="img" aria-labelledby="title desc">
+  <title id="title">JoyGo default Trip background</title>
+  <desc id="desc">Soft gold and ivory travel themed background with layered mountains and a torii silhouette.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fcfbf8"/>
+      <stop offset="100%" stop-color="#f6f1e7"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8f1df" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#edd9a8" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="ridge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ead7af" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#d3b06c" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e7d1a0" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="#d1aa60" stop-opacity="0.72"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="18%" r="70%">
+      <stop offset="0%" stop-color="#f8e8bc" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#f8e8bc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="768" height="1024" fill="url(#bg)"/>
+  <rect width="768" height="1024" fill="url(#glow)"/>
+  <path d="M40 835C156 742 313 730 430 777C539 821 626 816 768 756V1024H0V908C10 886 24 860 40 835Z" fill="#f3e8cf" opacity="0.95"/>
+  <path d="M-30 896C128 776 329 757 484 814C585 851 680 851 820 797V1024H-30V896Z" fill="url(#mist)" opacity="0.72"/>
+  <path d="M-40 955C80 846 252 830 398 870C553 913 657 917 808 869V1024H-40V955Z" fill="#e4cca1" opacity="0.55"/>
+  <path d="M38 846C75 776 103 716 128 673C190 686 237 735 298 815C243 822 182 844 104 890Z" fill="#e2cc9a" opacity="0.34"/>
+  <path d="M0 961C141 848 292 824 437 859C565 890 665 889 768 859V1024H0V961Z" fill="url(#ridge)" opacity="0.40"/>
+  <path d="M0 996C141 927 265 907 406 927C557 949 669 949 768 931V1024H0V996Z" fill="url(#front)" opacity="0.88"/>
+  <path d="M601 897h82v8h-82zM612 909h60v6h-60zM622 916h6v48h-6zM656 916h6v48h-6z" fill="#b88a35" opacity="0.58"/>
+  <path d="M536 851c7-6 14-10 22-12" stroke="#c79d53" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
+  <path d="M558 842c8-8 16-13 26-17" stroke="#c79d53" stroke-width="3" stroke-linecap="round" opacity="0.36"/>
+</svg>
