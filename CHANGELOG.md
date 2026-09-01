@@ -1,12 +1,12 @@
-# v8.0.6 — JoyGo 樂遊 · Default Trip Background & App Info Branding
+# v8.0.7 — JoyGo 樂遊 · Background Material & Navigation Visual Regression Fix
 
 ## What changed
 
-1. Added a JoyGo official default Trip background asset for any Trip without a custom background, so new Trips, imported Trips and existing Trips with no background all render a complete branded backdrop by default.
-2. Kept custom Trip backgrounds fully priority based: if a Trip already has its own Firebase background, that custom media still wins and the new JoyGo background only acts as the fallback.
-3. Updated the Trip Background settings preview so non customised Trips now clearly show 「JoyGo 預設背景」 instead of looking like an empty or legacy background state.
-4. Upgraded 「我的 → App 資訊」 with the official JoyGo app icon, product name and tagline to make the About page feel more polished and brand aligned.
-5. Bumped app shell, manifest and Service Worker release identity to v8.0.6, and added the new default background asset to the shell precache list.
+1. Fixed the new JoyGo default Trip background appearing pink on real iPhone hardware. Root cause was the legacy light theme canvas and overlay still using the previous pink palette, which sat above the new white and gold background asset.
+2. Replaced the default branded SVG background with a tall raster WebP version to reduce iOS fixed background plus backdrop filter compositor cost during normal scrolling and snapshot navigation.
+3. Changed the light app canvas from the legacy pink palette to a warm neutral white and reduced the background overlay to a very light neutral veil so the background artwork remains visible.
+4. Verified the protected Profile navigation compositor and Booking Documents navigation compositor against the v8.0.1 source reference. Core transition functions, durations, travel ratios and compositor CSS remain byte identical; no navigation animation engine rewrite was introduced in this patch.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.7 and precaches the new WebP default background.
 
 ---
 

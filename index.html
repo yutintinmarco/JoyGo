@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.6">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.7">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -115,7 +115,7 @@
       z-index: -1;
     }
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; background: transparent; color: #111; height: 100vh; overflow: hidden; }
-    html { background: #f7e8ef; }
+    html { background: #f8f5ee; }
     .scroll-shell { height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top); background: transparent; }
     .container { max-width: 480px; margin: 0 auto; padding: 16px 16px 120px 16px; }
 
@@ -1028,11 +1028,11 @@ html:not(.theme-light):not(.theme-dark) .modal::before { background: rgba(225,22
 
 /* Phase 1 · native interaction refinement · 7.0.2 */
 :root {
-  --trip-bg-source: url("assets/bg/bg_default_trip_brand.svg");
-  --app-canvas: #f2dce6;
-  --app-canvas-solid: #f7eef2;
+  --trip-bg-source: url("assets/bg/bg_default_trip_brand.webp");
+  --app-canvas: #f8f5ee;
+  --app-canvas-solid: #fbfaf7;
   --app-background:
-    linear-gradient(180deg, rgba(252,247,249,0.34), rgba(246,238,242,0.56)),
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(250,246,236,0.18)),
     var(--trip-bg-source) center top / cover no-repeat;
   --surface-primary: rgba(255,255,255,0.58);
   --surface-secondary: rgba(255,255,255,0.38);
@@ -3802,7 +3802,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.6" !important;
+  content:"v8.0.7" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3823,7 +3823,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.6" !important;
+  content:"v8.0.7" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4631,7 +4631,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.6">
+  <link rel="manifest" href="manifest.json?release=8.0.7">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4639,8 +4639,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.6" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.6"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.7" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.7"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5848,7 +5848,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.6</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.7</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6507,7 +6507,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.6";
+const APP_VERSION = "8.0.7";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -8446,7 +8446,7 @@ function legacyTripVisualMeta(data){
 function safeCssUrl(value){return `url(${JSON.stringify(String(value||""))})`;}
 const TRIP_BOOT_VISUAL_KEY="travel_boot_visual_v1";
 const TRIP_BOOT_BACKGROUND_PREVIEW_KEY="travel_boot_background_preview_v1";
-const DEFAULT_TRIP_BACKGROUND_ASSET="assets/bg/bg_default_trip_brand.svg";
+const DEFAULT_TRIP_BACKGROUND_ASSET="assets/bg/bg_default_trip_brand.webp";
 function tripBackgroundMediaMeta(data){
   const tripId=dataTripId(data),pending=pendingTripMediaOverlay(tripId,"background");
   const media=pending?.descriptor||data?.meta?.backgroundImageMedia;

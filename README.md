@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.6**
+Current release: **v8.0.7**
 
 ## Latest release notes
 
-### v8.0.6
+### v8.0.7
 
-Introduced the JoyGo branded default Trip background as a generic app shell asset for any Trip without a custom background, so new and existing Trips now feel complete without writing placeholder media into Firebase. Also upgraded 「我的 → App 資訊」 with the official JoyGo icon, product name and tagline, while keeping all Firebase, permission and Trip data architecture unchanged.
+Corrected the JoyGo default Trip background material after real device review. The old pink application canvas and pink translucent overlay were removed from the light theme, the branded default background is now a raster WebP for smoother iOS compositing, and the protected Profile plus Booking Documents navigation engines remain byte identical to the v8.0.1 reference promoted from v7.9.20.24.
 
 
 ## Production data boundary
