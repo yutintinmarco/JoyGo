@@ -1,5 +1,5 @@
 /* JoyGo 樂遊 Service Worker
- * v8.0.5 · Full Screen Entry Unification
+ * v8.0.6 · Default Trip Background & App Info Branding
  *
  * Keeps the v7.7.0.14 cold-start behaviour, while hardening installation:
  *  1. Critical shell assets are transactional. If any critical file cannot be
@@ -14,7 +14,7 @@
  *     explicit reload stays network-first.
  */
 
-const RELEASE_VERSION = "8.0.5";
+const RELEASE_VERSION = "8.0.6";
 const SW_VERSION = `travel-shell-v${RELEASE_VERSION}`;
 const CORE_CACHE = SW_VERSION;
 const BOOKING_DOCUMENT_PREVIEW_CACHE = "travel-booking-document-preview-v1";
@@ -38,7 +38,8 @@ const CRITICAL_ASSETS = [
   "./assets/js/trip-session-service.js",
   "./assets/js/user-preferences-service.js",
   "./assets/icon/trip_icon.png",
-  "./assets/bg/bg_trip_mobile.webp"
+  "./assets/bg/bg_trip_mobile.webp",
+  "./assets/bg/bg_default_trip_brand.svg"
 ];
 
 // Useful after launch, but a missing file here must never replace a known-good

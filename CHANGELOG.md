@@ -1,14 +1,12 @@
-# v8.0.5 — JoyGo 樂遊 · Full Screen Entry Unification
+# v8.0.6 — JoyGo 樂遊 · Default Trip Background & App Info Branding
 
 ## What changed
 
-1. Removed the large framed hero card from the Entry experience. The JoyGo brand layout now lives directly on the full page canvas.
-2. Applied the same full-screen visual language to signed-out Login, pending, resolving, no-access and error states.
-3. Moved the soft travel landscape treatment to the page level so the bottom scenery spans the screen rather than sitting inside a rounded container.
-4. Kept the Google sign-in action centred and professional, with the same refined JoyGo icon and white-gold palette.
-5. Preserved adaptive scroll behaviour: compact Entry states remain fixed without unnecessary vertical bounce, while longer invite, archive or creator content can still scroll.
-6. Preserved Firebase access control, Trip permissions, Fast Resume and all protected app features.
-7. Bumped app shell, manifest and Service Worker release identity to v8.0.5.
+1. Added a JoyGo official default Trip background asset for any Trip without a custom background, so new Trips, imported Trips and existing Trips with no background all render a complete branded backdrop by default.
+2. Kept custom Trip backgrounds fully priority based: if a Trip already has its own Firebase background, that custom media still wins and the new JoyGo background only acts as the fallback.
+3. Updated the Trip Background settings preview so non customised Trips now clearly show 「JoyGo 預設背景」 instead of looking like an empty or legacy background state.
+4. Upgraded 「我的 → App 資訊」 with the official JoyGo app icon, product name and tagline to make the About page feel more polished and brand aligned.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.6, and added the new default background asset to the shell precache list.
 
 ---
 
