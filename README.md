@@ -4,7 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.2**
+Current release: **v8.0.3**
+
+## Latest release notes
+
+### v8.0.3
+
+Refined the Entry experience so signed out login, resolving handoff and no access states share one JoyGo branded surface. The update keeps the same Firebase access model and Trip permission flow while improving first impression, visual consistency and small state scroll behavior.
 
 This repository is the production app shell. Firebase remains the authoritative data source for active trips. Runtime Firebase project identifiers and existing Firestore / Storage paths are intentionally unchanged from the regression-passed v7.9.20.24 baseline.
 

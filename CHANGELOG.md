@@ -1,3 +1,15 @@
+# v8.0.3 — JoyGo 樂遊 · Entry Experience Refinement
+
+## What changed
+
+1. Rebuilt the signed out Login Gateway into a more polished JoyGo branded entry screen with the refined white and gold icon, premium hero treatment and cleaner call to action.
+2. Added the same branded hero system to Entry lobby and no access states so the screen no longer feels visually empty when a signed in user has no authorised Trips yet.
+3. Added scroll lock for compact Entry states that fit on one screen, preventing unnecessary vertical bounce on login, resolving and simple no access views while still allowing normal scrolling when invite, archive or creator content expands.
+4. Preserved the existing Firebase access control, Trip permission lifecycle and Fast Resume behavior. This release is a UI refinement only.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.3.
+
+---
+
 # v8.0.2 — JoyGo 樂遊 · Brand Icon + Launch Palette
 
 - Replaced the legacy map-pin PWA artwork with the approved JoyGo gold `G + airplane` brand mark for Apple Touch Icon, 192 px PWA, 512 px PWA and 512 px maskable launcher assets.
