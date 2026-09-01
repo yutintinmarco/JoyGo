@@ -1,12 +1,13 @@
-# v8.0.7 — JoyGo 樂遊 · Background Material & Navigation Visual Regression Fix
+# v8.0.8 — JoyGo 樂遊 · Trip Background Visibility & v7.9.20.24 Navigation Restore
 
 ## What changed
 
-1. Fixed the new JoyGo default Trip background appearing pink on real iPhone hardware. Root cause was the legacy light theme canvas and overlay still using the previous pink palette, which sat above the new white and gold background asset.
-2. Replaced the default branded SVG background with a tall raster WebP version to reduce iOS fixed background plus backdrop filter compositor cost during normal scrolling and snapshot navigation.
-3. Changed the light app canvas from the legacy pink palette to a warm neutral white and reduced the background overlay to a very light neutral veil so the background artwork remains visible.
-4. Verified the protected Profile navigation compositor and Booking Documents navigation compositor against the v8.0.1 source reference. Core transition functions, durations, travel ratios and compositor CSS remain byte identical; no navigation animation engine rewrite was introduced in this patch.
-5. Bumped app shell, manifest and Service Worker release identity to v8.0.7 and precaches the new WebP default background.
+1. Rebuilt the JoyGo default Trip background from 1170 × 2532 to a compositor-friendly 640 × 1385 WebP and raised the mountain composition so it remains visibly present behind normal Trip cards instead of appearing only when large empty areas are exposed.
+2. Removed the remaining Light Mode whitening overlay from `--app-background`; the restrained JoyGo asset now paints directly, avoiding the washed-out cream membrane seen on real-device testing.
+3. Restored the Profile navigation compositor CSS and runtime transition block verbatim from the user-supplied v7.9.20.24 Complete Backup.
+4. Restored the Booking Documents / Info navigation compositor CSS and runtime transition block verbatim from the same v7.9.20.24 source.
+5. Kept all current v8 production sanitization, Firebase access, Trip permissions, branding, App Info branding and custom-background precedence unchanged.
+6. Bumped app shell, manifest and Service Worker release identity to v8.0.8.
 
 ---
 
