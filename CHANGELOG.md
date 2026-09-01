@@ -1,3 +1,16 @@
+# v8.0.10 — JoyGo 樂遊 · Zero Trip App Admin Route Isolation
+
+## What changed
+
+1. Fixed the zero Trip App Admin route so System Admin opens directly from the Entry lobby instead of visibly passing through the normal My page.
+2. Removed the normal Trip header and workspace chrome from the isolated zero Trip admin route.
+3. Changed the System Admin back control to return directly to the JoyGo Entry lobby when opened without an authorised Trip.
+4. Hardened Profile navigation so the normal My root cannot be reached from the isolated App Admin route, including generic back navigation.
+5. Preserved the ordinary System Admin flow for users who already have an authorised Trip.
+6. Bumped app shell, manifest and Service Worker release identity to v8.0.10.
+
+---
+
 # v8.0.9 — JoyGo 樂遊 · Default Background Pipeline Fix
 
 ## What changed

@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.9">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.10">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -2960,11 +2960,17 @@ html:not(.theme-light):not(.theme-dark) .profile-chevron{
 .profile-row[disabled].profile-row-disabled .profile-row-copy strong,
 .profile-row[disabled].profile-row-disabled .profile-row-copy small{color:var(--label-secondary);}
 
-/* Zero-Trip App Admin still uses the exact same Profile page. Entry chrome stays
-   hidden while the normal Profile navigation host is temporarily exposed. */
+/* Zero Trip App Admin uses the existing System Admin page without exposing the
+   normal Trip workspace or the Profile root. The Entry Gateway stays authoritative
+   before and after this isolated admin route. */
 body.app-entry-gated.app-admin-entry-route .app-entry-gateway{display:none!important;}
 body.app-entry-gated.app-admin-entry-route #scroll-shell{visibility:visible!important;pointer-events:auto!important;}
 body.app-entry-gated.app-admin-entry-route #bottom-nav{visibility:hidden!important;pointer-events:none!important;}
+body.app-entry-gated.app-admin-entry-route #pull-indicator,
+body.app-entry-gated.app-admin-entry-route #scroll-shell>.container>.header,
+body.app-entry-gated.app-admin-entry-route #trip-boot-placeholder,
+body.app-entry-gated.app-admin-entry-route #cloud-safety-strip{display:none!important;}
+body.app-entry-gated.app-admin-entry-route #profile-view{padding-top:0!important;}
 
 /* 5 · Navigation bar -------------------------------------------------
    A back control that names where it goes is the single strongest iOS cue.
@@ -3801,7 +3807,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.9" !important;
+  content:"v8.0.10" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3822,7 +3828,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.9" !important;
+  content:"v8.0.10" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4630,7 +4636,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.9">
+  <link rel="manifest" href="manifest.json?release=8.0.10">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4638,8 +4644,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.9" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.9"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.10" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.10"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5847,7 +5853,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.9</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.10</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6506,7 +6512,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.9";
+const APP_VERSION = "8.0.10";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -14052,25 +14058,41 @@ async function ensureAppAdminAccess(){
   if(state.enabled)return true;
   alert("目前帳戶唔係 App Admin。");return false;
 }
+function setSystemAdminBackMode({fromEntry=false}={}){
+  const back=document.getElementById("system-admin-back");
+  const label=back?.querySelector(".profile-detail-back-label");
+  if(!back)return;
+  back.setAttribute("aria-label",fromEntry?"返回 JoyGo 樂遊":"返回我的");
+  if(label)label.textContent=fromEntry?"返回":"我的";
+}
 async function openAppAdminFromEntry(){
   if(!(await ensureAppAdminAccess()))return;
   appAdminOpenedFromEntry=true;
-  document.body.classList.add("app-admin-entry-route");
-  setView("profile",{restoreScroll:false});
-  profileNavStack=[{key:"root",scrollTop:0,snapshot:null}];
-  profileSetLivePage("root",0);
+  setSystemAdminBackMode({fromEntry:true});
   resetAppAdminEditor();
-  loadAppAdminCreators();requestAnimationFrame(()=>openProfilePage("system-admin"));
+  loadAppAdminCreators();
+
+  // Build the isolated target before revealing the workspace shell. The Profile
+  // root must never become visible when there is no authorised Trip.
+  setView("profile",{restoreScroll:false});
+  profileClearSurfaces();
+  profileNavStack=[{key:"system-admin",scrollTop:0,snapshot:null}];
+  profileSetLivePage("system-admin",0);
+  document.body.classList.add("app-admin-entry-route");
 }
 function closeAppAdminEntryRoute(){
+  // Re expose the Entry Gateway first. Any Profile reset happens behind it so
+  // the zero Trip user can never see or navigate to the normal My page.
+  document.body.classList.remove("app-admin-entry-route");
   appAdminOpenedFromEntry=false;
+  setSystemAdminBackMode({fromEntry:false});
+  profileClearSurfaces();
   profileNavStack=[{key:"root",scrollTop:0,snapshot:null}];
   profileSetLivePage("root",0);
   setView("itinerary",{restoreScroll:false});
-  document.body.classList.remove("app-admin-entry-route");
   refreshAppEntryState();
 }
-document.getElementById("system-admin-open-btn")?.addEventListener("click",()=>{resetAppAdminEditor();loadAppAdminCreators();});
+document.getElementById("system-admin-open-btn")?.addEventListener("click",()=>{setSystemAdminBackMode({fromEntry:false});resetAppAdminEditor();loadAppAdminCreators();});
 document.getElementById("entry-system-admin-btn")?.addEventListener("click",openAppAdminFromEntry);
 document.getElementById("system-admin-back")?.addEventListener("click",()=>{if(appAdminOpenedFromEntry)closeAppAdminEntryRoute();else backProfilePage();});
 document.getElementById("app-admin-add-creator")?.addEventListener("click",async()=>{
@@ -15609,11 +15631,13 @@ function profileRunProgrammaticTransition({targetKey,targetScroll=0,direction=1,
   });
 }
 function openProfilePage(key){
+  if(appAdminOpenedFromEntry&&key!=="system-admin")return;
   if(profileNavigationTransitioning||key==="root"||!profilePages[key]||profileCurrentPage===key)return;
   closeTripSwitcher();
   profileRunProgrammaticTransition({targetKey:key,targetScroll:0,direction:-1,push:true});
 }
 function backProfilePage(){
+  if(appAdminOpenedFromEntry){closeAppAdminEntryRoute();return;}
   if(profileNavigationTransitioning||profileCurrentPage==="root"||profileNavStack.length<=1)return;
   const previous=profileNavStack[profileNavStack.length-2]||{key:"root",scrollTop:0,snapshot:null};
   profileRunProgrammaticTransition({targetKey:previous.key,targetScroll:previous.scrollTop||0,direction:1,pop:true});

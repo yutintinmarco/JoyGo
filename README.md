@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.9**
+Current release: **v8.0.10**
 
 ## Latest release notes
 
-### v8.0.9
+### v8.0.10
 
-Fixed the default Trip background pipeline at its root cause. The bundled JoyGo background asset is now preloaded, decoded and committed through the same safe CSS URL path as uploaded Firebase backgrounds, preventing an invalid raw file path from replacing `--trip-bg-source`. This restores the intended default background and the correct Profile / Booking Documents snapshot transition environment without changing the proven v7.9.20.24 transition engine.
+Fixed the zero Trip App Admin route. An authorised App Admin can still manage Creator access from the Entry lobby, but the route now opens System Admin directly without rendering the normal My page, hides Trip workspace chrome, and returns straight to the Entry lobby. The normal Profile root is no longer reachable while the account has no authorised Trip.
 
 
 ## Production data boundary
