@@ -1,12 +1,12 @@
-# v8.0.3 — JoyGo 樂遊 · Entry Experience Refinement
+# v8.0.4 — JoyGo 樂遊 · Entry Splash Alignment
 
 ## What changed
 
-1. Rebuilt the signed out Login Gateway into a more polished JoyGo branded entry screen with the refined white and gold icon, premium hero treatment and cleaner call to action.
-2. Added the same branded hero system to Entry lobby and no access states so the screen no longer feels visually empty when a signed in user has no authorised Trips yet.
-3. Added scroll lock for compact Entry states that fit on one screen, preventing unnecessary vertical bounce on login, resolving and simple no access views while still allowing normal scrolling when invite, archive or creator content expands.
-4. Preserved the existing Firebase access control, Trip permission lifecycle and Fast Resume behavior. This release is a UI refinement only.
-5. Bumped app shell, manifest and Service Worker release identity to v8.0.3.
+1. Reworked the JoyGo Entry gateway to follow the approved splash style more closely: centered premium brand presentation, integrated Google login call to action and a soft illustrated travel footer.
+2. Kept the same refined JoyGo icon and white-gold palette while simplifying the hero copy so the signed-out entry experience feels closer to a native app opening screen.
+3. Extended the same branded visual system to no-access and restricted Entry states so signed-in users without authorised Trips no longer land on a visually empty page.
+4. Preserved the adaptive Entry scroll lock behaviour: compact login, loading and simple no-access states stay fixed on one screen, while longer invite or archive content can still scroll normally.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.4.
 
 ---
 

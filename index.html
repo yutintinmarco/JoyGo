@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.3">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.4">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -3752,7 +3752,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.3" !important;
+  content:"v8.0.4" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3773,7 +3773,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.3" !important;
+  content:"v8.0.4" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3919,15 +3919,14 @@ html.theme-dark .modal-actions .modal-close-btn{
 .app-progress-backdrop.is-error .app-progress-done{background:var(--app-action-danger) !important;}
 
 /* Phase 2G.1 · Entry / Access Gateway
-   v8.0.3 refreshes the branded Entry experience so signed-out login,
-   resolving handoff and no-access states all share one polished JoyGo shell.
-   The workflow and permissions model stay unchanged; this is a UI refinement. */
+   v8.0.4 aligns the signed-out login and no-access Entry states to the
+   approved JoyGo splash concept: a centered premium brand panel, integrated
+   Google sign-in call to action and a soft travel illustration footer. The
+   Firebase access model and Trip permission lifecycle remain unchanged. */
 .app-entry-gateway{
   position:fixed;inset:0;z-index:1800;display:none;overflow:auto;-webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
-  background:
-    radial-gradient(115% 68% at 100% 0%,rgba(241,210,122,.16) 0%,rgba(241,210,122,0) 46%),
-    linear-gradient(180deg,#fcfbf8 0%,#f5f5f4 100%);
+  background:linear-gradient(180deg,#fcfbf9 0%,#f7f5f1 100%);
   color:var(--label-primary);
 }
 .app-entry-gateway[data-entry-scroll-lock="true"]{
@@ -3938,85 +3937,94 @@ body.app-entry-gated .ios-compact-header,
 body.app-entry-gated #scroll-shell,
 body.app-entry-gated #bottom-nav,
 body.app-entry-gated #trip-quick-popover{visibility:hidden!important;pointer-events:none!important;}
-/* Fast Resume: a remembered user-bound Trip is continuation on both a PWA
-   Home Screen launch and an in-app reload. Keep the App shell visible while
-   IndexedDB + Auth + Firestore reconcile behind it. If Auth later resolves
-   signed-out / different-user, JS removes this class and the real Login
-   Gateway becomes authoritative. */
 html.app-entry-refresh-warm body.app-entry-gated .app-entry-gateway{display:none!important;}
 html.app-entry-refresh-warm body.app-entry-gated .ios-compact-header,
 html.app-entry-refresh-warm body.app-entry-gated #scroll-shell,
 html.app-entry-refresh-warm body.app-entry-gated #bottom-nav,
 html.app-entry-refresh-warm body.app-entry-gated #trip-quick-popover{visibility:visible!important;pointer-events:auto!important;}
 .app-entry-shell{
-  width:min(480px,100%);min-height:100%;margin:0 auto;box-sizing:border-box;
-  padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+  width:min(430px,100%);min-height:100%;margin:0 auto;box-sizing:border-box;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 20px);
   display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:12px;
 }
 .app-entry-shell>.profile-section-label{display:none;}
 .app-entry-brand-hero{
-  position:relative;display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:14px;
-  overflow:hidden;border-radius:32px;
-  padding:24px 18px 18px;
-  background:linear-gradient(180deg,rgba(255,255,255,.95) 0%,rgba(252,249,243,.92) 100%);
-  border:1px solid rgba(223,209,178,.34);
-  box-shadow:0 20px 42px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.86);
-  text-align:center;
-}
-.app-entry-brand-hero::before{
-  content:"";position:absolute;left:-10%;right:-6%;bottom:-16%;height:44%;pointer-events:none;
+  position:relative;overflow:hidden;border-radius:34px;isolation:isolate;
+  min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 36px);
+  padding:28px 22px 176px;
   background:
-    radial-gradient(80% 110% at 18% 100%,rgba(244,232,210,.78) 0%,rgba(244,232,210,0) 68%),
-    linear-gradient(90deg,rgba(241,210,122,.08) 0%,rgba(241,210,122,.18) 38%,rgba(211,163,62,.26) 72%,rgba(185,130,40,.18) 100%);
+    radial-gradient(110% 72% at 100% 0%,rgba(241,210,122,.12) 0%,rgba(241,210,122,0) 44%),
+    linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(250,247,239,.98) 100%);
+  border:1px solid rgba(223,209,178,.42);
+  box-shadow:0 18px 44px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
 }
-.app-entry-brand-hero::after{
-  content:"";position:absolute;right:-18%;top:-20%;width:210px;height:210px;border-radius:999px;pointer-events:none;
-  background:radial-gradient(circle,rgba(241,210,122,.18) 0%,rgba(241,210,122,0) 70%);
-}
+.app-entry-brand-hero-content{position:relative;z-index:2;display:grid;justify-items:center;align-content:start;gap:12px;width:100%;}
 .app-entry-brand-hero-visual{
-  position:relative;z-index:1;width:120px;height:120px;border-radius:30px;background:#fff;
-  box-shadow:0 16px 34px rgba(45,46,50,.10),inset 0 1px 0 rgba(255,255,255,.88);
-  display:grid;place-items:center;
+  width:126px;height:126px;border-radius:32px;background:#fff;display:grid;place-items:center;
+  box-shadow:0 16px 36px rgba(45,46,50,.10),inset 0 1px 0 rgba(255,255,255,.88);
 }
-.app-entry-brand-hero-logo{width:96px;height:96px;border-radius:24px;object-fit:cover;}
-.app-entry-brand-hero-copy{position:relative;z-index:1;display:grid;gap:8px;justify-items:center;max-width:320px;}
+.app-entry-brand-hero-logo{width:102px;height:102px;border-radius:26px;object-fit:cover;}
+.app-entry-brand-hero-copy{display:grid;gap:8px;justify-items:center;max-width:320px;}
 .app-entry-brand-hero-pill{
-  display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:0 11px;border-radius:999px;
-  background:rgba(255,255,255,.84);border:1px solid rgba(211,163,62,.18);
-  box-shadow:0 4px 18px rgba(211,163,62,.08);color:#94681d;font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+  display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:0 10px;border-radius:999px;
+  background:rgba(255,255,255,.86);border:1px solid rgba(211,163,62,.16);box-shadow:0 4px 18px rgba(211,163,62,.06);
+  color:#a5792d;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
 }
-.app-entry-brand-hero-title{margin:0;font-size:calc(34px * var(--font-scale));line-height:1.02;letter-spacing:-.032em;color:var(--label-primary);}
-.app-entry-brand-hero-tagline{margin:0;color:#b07b26;font-size:calc(17px * var(--font-scale));font-weight:700;line-height:1.28;letter-spacing:.01em;}
+.app-entry-brand-hero-title{margin:0;font-size:calc(29px * var(--font-scale));line-height:1.05;letter-spacing:-.03em;color:var(--label-primary);}
+.app-entry-brand-hero-tagline{margin:0;color:#b07b26;font-size:calc(16px * var(--font-scale));font-weight:700;line-height:1.28;letter-spacing:.01em;}
 .app-entry-brand-hero-caption{margin:0;color:var(--label-secondary);font-size:calc(13px * var(--font-scale));line-height:1.48;}
-.app-entry-status-card .profile-row{pointer-events:none;}
-.app-entry-status-icon{overflow:hidden;}
-.app-entry-status-icon .trip-boot-spinner{width:17px;height:17px;border-width:2px;}
-.app-entry-login-panel{display:none;min-height:auto;box-sizing:border-box;flex-direction:column;justify-content:flex-start;padding:0 6px 2px;text-align:center;}
-.app-entry-login-brand{display:none;}
-.app-entry-login-actions{margin-top:0;display:grid;gap:12px;}
+.app-entry-brand-hero-actions{display:grid;gap:10px;width:min(100%,310px);margin-top:16px;justify-items:center;}
+.app-entry-login-panel,.app-entry-login-brand{display:none!important;}
 .app-entry-login-button{
-  width:100%;min-height:58px;border:0;border-radius:18px;
-  background:rgba(255,255,255,.94);color:var(--label-primary);
-  box-shadow:0 12px 30px rgba(45,46,50,.08),inset 0 1px 0 rgba(255,255,255,.78);
+  width:100%;min-height:58px;border:0;border-radius:18px;background:rgba(255,255,255,.96);color:var(--label-primary);
+  box-shadow:0 12px 30px rgba(45,46,50,.07),inset 0 1px 0 rgba(255,255,255,.78);
   display:flex;align-items:center;justify-content:center;gap:12px;padding:0 20px;
   font:inherit;font-weight:700;font-size:calc(15px * var(--font-scale));-webkit-tap-highlight-color:transparent;
 }
 .app-entry-login-button:active{transform:scale(.985);opacity:.82;}
-.app-entry-login-google-mark{width:30px;height:30px;border-radius:9px;background:#f7f7f6;display:grid;place-items:center;font-size:17px;font-weight:800;color:var(--label-primary);box-shadow:inset 0 0 0 1px rgba(17,17,17,.06);}
-.app-entry-login-note{margin:0 20px;color:var(--label-tertiary,var(--label-secondary));font-size:calc(11px * var(--font-scale));line-height:1.45;}
-.app-entry-login-opening{display:none;align-items:center;justify-content:center;gap:9px;color:var(--label-secondary);font-size:calc(12px * var(--font-scale));padding-top:8px;}
+.app-entry-login-google-mark{
+  width:30px;height:30px;border-radius:999px;background:#fff;display:grid;place-items:center;
+  font-size:18px;font-weight:800;color:var(--label-primary);box-shadow:inset 0 0 0 1px rgba(17,17,17,.08);
+}
+.app-entry-login-note{margin:0;color:var(--label-tertiary,var(--label-secondary));font-size:calc(11px * var(--font-scale));line-height:1.45;max-width:300px;}
+.app-entry-login-opening{display:none;align-items:center;justify-content:center;gap:9px;color:var(--label-secondary);font-size:calc(12px * var(--font-scale));padding-top:6px;}
 .app-entry-login-opening .trip-boot-spinner{width:15px;height:15px;border-width:2px;}
-.app-entry-gateway[data-entry-state="pending"] .app-entry-login-panel,
-.app-entry-gateway[data-entry-state="login"] .app-entry-login-panel{display:flex;}
+.app-entry-brand-landscape{position:absolute;left:0;right:0;bottom:0;height:34%;min-height:160px;pointer-events:none;z-index:1;}
+.app-entry-brand-landscape::before{
+  content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(244,232,210,.32) 36%,rgba(230,205,161,.46) 100%);
+}
+.app-entry-landscape-layer{position:absolute;left:-12%;right:-12%;bottom:-8%;border-radius:50% 50% 0 0 / 100% 100% 0 0;filter:blur(.1px);}
+.app-entry-landscape-layer.is-back{height:58%;background:rgba(229,209,173,.48);bottom:22%;transform:skewX(-18deg) translateX(3%);}
+.app-entry-landscape-layer.is-mid{height:64%;background:rgba(217,190,143,.48);bottom:6%;transform:skewX(15deg) translateX(-2%);}
+.app-entry-landscape-layer.is-front{height:70%;background:rgba(196,160,99,.54);bottom:-10%;transform:skewX(-8deg);}
+.app-entry-landscape-ridge{position:absolute;left:6%;bottom:16%;width:52%;height:42%;background:rgba(214,186,139,.36);border-radius:0 100% 0 0 / 0 100% 0 0;transform:skewX(-26deg) rotate(-3deg);}
+.app-entry-landscape-torii{
+  position:absolute;right:30px;bottom:18px;width:58px;height:46px;color:rgba(174,126,53,.55);
+  background:
+    linear-gradient(currentColor 0 0) center top/100% 5px no-repeat,
+    linear-gradient(currentColor 0 0) center 9px/72% 4px no-repeat,
+    linear-gradient(currentColor 0 0) 16px 100%/5px 74% no-repeat,
+    linear-gradient(currentColor 0 0) calc(100% - 16px) 100%/5px 74% no-repeat;
+}
+.app-entry-landscape-bird{
+  position:absolute;right:74px;bottom:56px;width:14px;height:8px;border-top:2px solid rgba(201,164,95,.55);border-radius:14px 14px 0 0;transform:rotate(10deg);
+}
+.app-entry-status-card .profile-row{pointer-events:none;}
+.app-entry-status-icon{overflow:hidden;}
+.app-entry-status-icon .trip-boot-spinner{width:17px;height:17px;border-width:2px;}
+.app-entry-gateway[data-entry-state="login"] .app-entry-login-button{display:flex;}
+.app-entry-gateway[data-entry-state="login"] .app-entry-login-note{display:block;}
+.app-entry-gateway[data-entry-state="login"] .app-entry-login-opening{display:none;}
 .app-entry-gateway[data-entry-state="pending"] .app-entry-login-button,
-.app-entry-gateway[data-entry-state="pending"] .app-entry-login-note{display:none;}
-.app-entry-gateway[data-entry-state="pending"] .app-entry-login-opening{display:flex;}
-/* Resolving never uses the legacy identity + access-confirmation cards.
-   Fast Resume normally hides the Gateway entirely; without a usable cache,
-   use only the branded lightweight opening panel. */
-.app-entry-gateway[data-entry-state="resolving"] .app-entry-login-panel{display:flex;}
+.app-entry-gateway[data-entry-state="pending"] .app-entry-login-note,
 .app-entry-gateway[data-entry-state="resolving"] .app-entry-login-button,
-.app-entry-gateway[data-entry-state="resolving"] .app-entry-login-note{display:none;}
+.app-entry-gateway[data-entry-state="resolving"] .app-entry-login-note,
+.app-entry-gateway[data-entry-state="lobby"] .app-entry-login-button,
+.app-entry-gateway[data-entry-state="lobby"] .app-entry-login-note,
+.app-entry-gateway[data-entry-state="error"] .app-entry-login-button,
+.app-entry-gateway[data-entry-state="error"] .app-entry-login-note{display:none;}
+.app-entry-gateway[data-entry-state="pending"] .app-entry-login-opening,
 .app-entry-gateway[data-entry-state="resolving"] .app-entry-login-opening{display:flex;}
 .app-entry-gateway[data-entry-state="resolving"] #entry-identity-card,
 .app-entry-gateway[data-entry-state="resolving"] #entry-state-card,
@@ -4024,13 +4032,6 @@ html.app-entry-refresh-warm body.app-entry-gated #trip-quick-popover{visibility:
 .app-entry-gateway[data-entry-state="resolving"] #entry-creator-card,
 .app-entry-gateway[data-entry-state="resolving"] #entry-system-admin-card,
 .app-entry-gateway[data-entry-state="resolving"] #entry-signout-card{display:none!important;}
-/* After a deliberate Google login, remain on the same branded Login Gateway until the
-   destination is resolved. Never flash the legacy identity/access cards in
-   between the Login Gateway and the Trip workspace. */
-.app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] .app-entry-login-panel{display:flex;}
-.app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] .app-entry-login-button,
-.app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] .app-entry-login-note{display:none;}
-.app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] .app-entry-login-opening{display:flex;}
 .app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] #entry-identity-card,
 .app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] #entry-state-card,
 .app-entry-gateway[data-login-handoff="true"][data-entry-state="resolving"] #entry-invite-card,
@@ -4054,37 +4055,23 @@ html.app-entry-refresh-warm body.app-entry-gated #trip-quick-popover{visibility:
 .app-entry-gateway[data-entry-state="error"] #entry-account-btn{display:none;}
 .app-entry-gateway[data-entry-state="workspace"]{display:none!important;}
 .app-entry-target-note{margin-top:8px;color:var(--label-secondary);font-size:calc(10px * var(--font-scale));line-height:1.45;}
-.app-entry-gateway[data-entry-state="login"] .app-entry-brand-hero,
-.app-entry-gateway[data-entry-state="pending"] .app-entry-brand-hero,
-.app-entry-gateway[data-entry-state="resolving"] .app-entry-brand-hero{
-  min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 230px);
-  align-content:center;padding:30px 22px 20px;
-}
-.app-entry-gateway[data-entry-state="login"] .app-entry-brand-hero-visual,
-.app-entry-gateway[data-entry-state="pending"] .app-entry-brand-hero-visual,
-.app-entry-gateway[data-entry-state="resolving"] .app-entry-brand-hero-visual{width:132px;height:132px;border-radius:34px;}
-.app-entry-gateway[data-entry-state="login"] .app-entry-brand-hero-logo,
-.app-entry-gateway[data-entry-state="pending"] .app-entry-brand-hero-logo,
-.app-entry-gateway[data-entry-state="resolving"] .app-entry-brand-hero-logo{width:108px;height:108px;border-radius:27px;}
 .app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero,
 .app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero{
-  grid-template-columns:80px minmax(0,1fr);align-items:center;justify-items:start;text-align:left;
-  padding:18px 18px 16px;border-radius:28px;gap:14px;
+  min-height:332px;padding-top:24px;padding-bottom:128px;
 }
-.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero::before,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero::before{height:38%;bottom:-12%;}
 .app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-visual,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-visual{width:80px;height:80px;border-radius:22px;}
+.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-visual{width:102px;height:102px;border-radius:28px;}
 .app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-logo,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-logo{width:64px;height:64px;border-radius:18px;}
-.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-copy,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-copy{justify-items:start;max-width:none;}
-.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-title,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-title{font-size:calc(24px * var(--font-scale));}
-.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-tagline,
-.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-tagline{font-size:calc(18px * var(--font-scale));}
-/* v7.8.0.1 · App Admin uses the same proven member rows and operation-sheet
-   geometry. This is deliberately not a second Settings design system. */
+.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-logo{width:82px;height:82px;border-radius:22px;}
+.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-landscape,
+.app-entry-gateway[data-entry-state="error"] .app-entry-brand-landscape{height:42%;min-height:120px;}
+.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-actions,
+.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-actions{display:none;}
+.app-entry-gateway[data-entry-state="pending"] .app-entry-brand-hero-pill,
+.app-entry-gateway[data-entry-state="resolving"] .app-entry-brand-hero-pill,
+.app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-pill,
+.app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-pill{display:inline-flex;}
+.app-entry-brand-hero-caption.is-emphasis{color:#94681d;font-weight:600;}
 .app-admin-sheet-heading{margin:2px 2px 8px;}
 .app-admin-sheet-list{display:grid;gap:8px;}
 .app-admin-actions{grid-template-columns:1fr;}
@@ -4092,14 +4079,12 @@ html.app-entry-refresh-warm body.app-entry-gated #trip-quick-popover{visibility:
 body.app-admin-modal-open .app-entry-gateway{overflow:hidden;}
 @media(max-width:370px){
   .app-entry-shell{padding-left:12px;padding-right:12px;}
-  .app-entry-brand-hero{padding-left:16px;padding-right:16px;}
-  .app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero,
-  .app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero{grid-template-columns:72px minmax(0,1fr);}
-  .app-entry-gateway[data-entry-state="lobby"] .app-entry-brand-hero-visual,
-  .app-entry-gateway[data-entry-state="error"] .app-entry-brand-hero-visual{width:72px;height:72px;}
+  .app-entry-brand-hero{padding-left:18px;padding-right:18px;padding-bottom:154px;}
+  .app-entry-brand-hero-title{font-size:calc(27px * var(--font-scale));}
+  .app-entry-brand-hero-visual{width:116px;height:116px;}
+  .app-entry-brand-hero-logo{width:94px;height:94px;}
+  .app-entry-brand-landscape-torii{right:22px;transform:scale(.88);transform-origin:bottom right;}
 }
-
-
 
 /* v7.9.7.0 · Phase 3B Map interaction refinement. Reuses the existing circular
    header action, itinerary Day pills and Team filter grammar. */
@@ -4567,7 +4552,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.3">
+  <link rel="manifest" href="manifest.json?release=8.0.4">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4575,8 +4560,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.3" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.3"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.4" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.4"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -4931,31 +4916,35 @@ dialog.booking-document-viewer.is-edge-swiping{
 <main class="app-entry-gateway" id="app-entry-gateway" data-entry-state="pending" aria-live="polite" aria-busy="true">
   <div class="app-entry-shell">
     <section class="app-entry-brand-hero" id="entry-brand-hero" aria-label="JoyGo 樂遊品牌入口">
-      <div class="app-entry-brand-hero-visual">
-        <img class="app-entry-brand-hero-logo" src="assets/icon/trip_icon.png" alt="JoyGo 樂遊">
+      <div class="app-entry-brand-hero-content">
+        <div class="app-entry-brand-hero-visual">
+          <img class="app-entry-brand-hero-logo" src="assets/icon/trip_icon.png" alt="JoyGo 樂遊">
+        </div>
+        <div class="app-entry-brand-hero-copy">
+          <div class="app-entry-brand-hero-pill" id="entry-hero-pill">Travel App</div>
+          <h1 class="app-entry-brand-hero-title">JoyGo 樂遊</h1>
+          <p class="app-entry-brand-hero-tagline" id="entry-hero-tagline">Your Journey, Perfectly Planned.</p>
+          <p class="app-entry-brand-hero-caption" id="entry-hero-caption">登入後查看你獲授權嘅旅程</p>
+        </div>
+        <div class="app-entry-brand-hero-actions" id="entry-brand-actions">
+          <button class="app-entry-login-button" id="entry-login-btn" type="button">
+            <span class="app-entry-login-google-mark" aria-hidden="true">G</span>
+            <span>使用 Google 帳戶登入</span>
+          </button>
+          <p class="app-entry-login-note">登入即代表你同意我們嘅私隱政策及服務條款。</p>
+          <div class="app-entry-login-opening" aria-live="polite"><span class="trip-boot-spinner" aria-hidden="true"></span><span id="entry-login-opening-text">正在開啟 JoyGo 樂遊…</span></div>
+        </div>
       </div>
-      <div class="app-entry-brand-hero-copy">
-        <div class="app-entry-brand-hero-pill" id="entry-hero-pill">Travel App</div>
-        <h1 class="app-entry-brand-hero-title">JoyGo 樂遊</h1>
-        <p class="app-entry-brand-hero-tagline" id="entry-hero-tagline">你的旅程，完美規劃</p>
-        <p class="app-entry-brand-hero-caption" id="entry-hero-caption">登入後查看你獲授權嘅旅程</p>
+      <div class="app-entry-brand-landscape" aria-hidden="true">
+        <span class="app-entry-landscape-layer is-back"></span>
+        <span class="app-entry-landscape-ridge"></span>
+        <span class="app-entry-landscape-layer is-mid"></span>
+        <span class="app-entry-landscape-layer is-front"></span>
+        <span class="app-entry-landscape-bird"></span>
+        <span class="app-entry-landscape-torii"></span>
       </div>
     </section>
-    <section class="app-entry-login-panel" id="entry-login-panel" aria-label="JoyGo 樂遊登入">
-      <div class="app-entry-login-brand">
-        <img class="app-entry-login-logo" src="assets/icon/trip_icon.png" alt="JoyGo 樂遊">
-        <h1>JoyGo 樂遊</h1>
-        <p>登入後查看你獲授權嘅旅程</p>
-      </div>
-      <div class="app-entry-login-actions">
-        <button class="app-entry-login-button" id="entry-login-btn" type="button">
-          <span class="app-entry-login-google-mark" aria-hidden="true">G</span>
-          <span>使用 Google 帳戶登入</span>
-        </button>
-        <p class="app-entry-login-note">使用你嘅 Google 帳戶安全登入，旅程資料會按現有權限顯示。</p>
-        <div class="app-entry-login-opening" aria-live="polite"><span class="trip-boot-spinner" aria-hidden="true"></span><span id="entry-login-opening-text">正在開啟 JoyGo 樂遊…</span></div>
-      </div>
-    </section>
+    <section class="app-entry-login-panel" id="entry-login-panel" aria-label="JoyGo 樂遊登入"></section>
     <div class="profile-section-label">JoyGo 樂遊</div>
     <section class="profile-card profile-identity-card" id="entry-identity-card" aria-label="Google 帳戶">
       <div class="profile-user-card" id="entry-user-card">
@@ -5773,7 +5762,7 @@ dialog.booking-document-viewer.is-edge-swiping{
         <span class="profile-detail-spacer"></span>
       </div>
       <section class="profile-card" aria-label="App 資訊">
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.3</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.4</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6432,7 +6421,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.3";
+const APP_VERSION = "8.0.4";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -10815,12 +10804,12 @@ function applyAppEntryState(nextState){
   if(openingText)openingText.textContent=appEntryLoginHandoff&&appEntryState==="resolving"?"正在開啟旅程…":"正在開啟 JoyGo 樂遊…";
   const gated=appEntryState!=="workspace";
   document.body.classList.toggle("app-entry-gated",gated);document.body.classList.toggle("app-entry-workspace",!gated);document.body.classList.toggle("app-entry-pending",["pending","resolving"].includes(appEntryState));
+  if(heroTagline)heroTagline.textContent="Your Journey, Perfectly Planned.";
   if(appEntryState==="pending"){
     if(title)title.textContent="正在確認帳戶";
     if(subtitle)subtitle.textContent="正在確認登入狀態。";
     if(pill)pill.textContent="確認中";
     if(heroPill)heroPill.textContent="Account Check";
-    if(heroTagline)heroTagline.textContent="正在確認帳戶";
     if(heroCaption)heroCaption.textContent="安全確認登入狀態後會自動繼續。";
   }
   else if(appEntryState==="resolving"){
@@ -10828,7 +10817,6 @@ function applyAppEntryState(nextState){
     if(subtitle)subtitle.textContent="安全確認完成後會直接進入你上次使用嘅旅程。";
     if(pill)pill.textContent=navigator.onLine===false?"離線確認":"確認中";
     if(heroPill)heroPill.textContent=appEntryLoginHandoff?"Opening Trip":"Access Check";
-    if(heroTagline)heroTagline.textContent=appEntryLoginHandoff?"正在開啟旅程":"正在確認旅程存取權";
     if(heroCaption)heroCaption.textContent="完成安全確認後會自動進入你可使用嘅 Workspace。";
   }
   else if(appEntryState==="lobby"){
@@ -10841,7 +10829,6 @@ function applyAppEntryState(nextState){
     if(subtitle)subtitle.textContent=lobbySubtitle;
     if(pill)pill.textContent=lobbyPill;
     if(heroPill)heroPill.textContent=targeted?"Invitation":(archivedCount?"Archive":"No Access Yet");
-    if(heroTagline)heroTagline.textContent=lobbyTitle;
     if(heroCaption)heroCaption.textContent=lobbySubtitle;
   }
   else if(appEntryState==="error"){
@@ -10850,11 +10837,9 @@ function applyAppEntryState(nextState){
     if(subtitle)subtitle.textContent=errorSubtitle;
     if(pill)pill.textContent="需處理";
     if(heroPill)heroPill.textContent="Attention";
-    if(heroTagline)heroTagline.textContent="暫時未能確認旅程";
     if(heroCaption)heroCaption.textContent=errorSubtitle;
   }else{
     if(heroPill)heroPill.textContent="Travel App";
-    if(heroTagline)heroTagline.textContent="你的旅程，完美規劃";
     if(heroCaption)heroCaption.textContent="登入後查看你獲授權嘅旅程";
   }
   if(icon){
