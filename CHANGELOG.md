@@ -1,3 +1,17 @@
+# v8.0.5 — JoyGo 樂遊 · Full Screen Entry Unification
+
+## What changed
+
+1. Removed the large framed hero card from the Entry experience. The JoyGo brand layout now lives directly on the full page canvas.
+2. Applied the same full-screen visual language to signed-out Login, pending, resolving, no-access and error states.
+3. Moved the soft travel landscape treatment to the page level so the bottom scenery spans the screen rather than sitting inside a rounded container.
+4. Kept the Google sign-in action centred and professional, with the same refined JoyGo icon and white-gold palette.
+5. Preserved adaptive scroll behaviour: compact Entry states remain fixed without unnecessary vertical bounce, while longer invite, archive or creator content can still scroll.
+6. Preserved Firebase access control, Trip permissions, Fast Resume and all protected app features.
+7. Bumped app shell, manifest and Service Worker release identity to v8.0.5.
+
+---
+
 # v8.0.4 — JoyGo 樂遊 · Entry Splash Alignment
 
 ## What changed

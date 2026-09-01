@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.4**
+Current release: **v8.0.5**
 
 ## Latest release notes
 
-### v8.0.4
+### v8.0.5
 
-Aligned the Entry experience to the approved JoyGo splash direction. The signed out login screen, resolving handoff and no access states now share a more polished white and gold branded surface with an integrated Google sign in button and soft travel footer illustration, while the existing Firebase access and permission flow remain unchanged.
+Converted the JoyGo Entry experience into a true full-screen branded canvas. Login, loading, no-access and error states now share the same white-and-gold page composition without an outer hero frame. The travel illustration belongs to the page itself, while compact states remain non-scrollable and longer invitation or archive content can still scroll normally. Firebase access and permission behaviour are unchanged.
 
 ## Production data boundary
 
