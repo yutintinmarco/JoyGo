@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.8**
+Current release: **v8.0.9**
 
 ## Latest release notes
 
-### v8.0.8
+### v8.0.9
 
-Recomposed the JoyGo default Trip background into a lighter raster workload with the mountain artwork raised into the visible app canvas and removed the remaining Light Mode whitening membrane. Profile and Booking Documents navigation compositor CSS and runtime blocks were restored verbatim from the user supplied v7.9.20.24 Complete Backup, preserving the approved historical transition implementation while keeping current JoyGo branding and production data boundaries.
+Fixed the default Trip background pipeline at its root cause. The bundled JoyGo background asset is now preloaded, decoded and committed through the same safe CSS URL path as uploaded Firebase backgrounds, preventing an invalid raw file path from replacing `--trip-bg-source`. This restores the intended default background and the correct Profile / Booking Documents snapshot transition environment without changing the proven v7.9.20.24 transition engine.
 
 
 ## Production data boundary

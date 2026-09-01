@@ -1,13 +1,12 @@
-# v8.0.8 — JoyGo 樂遊 · Trip Background Visibility & v7.9.20.24 Navigation Restore
+# v8.0.9 — JoyGo 樂遊 · Default Background Pipeline Fix
 
 ## What changed
 
-1. Rebuilt the JoyGo default Trip background from 1170 × 2532 to a compositor-friendly 640 × 1385 WebP and raised the mountain composition so it remains visibly present behind normal Trip cards instead of appearing only when large empty areas are exposed.
-2. Removed the remaining Light Mode whitening overlay from `--app-background`; the restrained JoyGo asset now paints directly, avoiding the washed-out cream membrane seen on real-device testing.
-3. Restored the Profile navigation compositor CSS and runtime transition block verbatim from the user-supplied v7.9.20.24 Complete Backup.
-4. Restored the Booking Documents / Info navigation compositor CSS and runtime transition block verbatim from the same v7.9.20.24 source.
-5. Kept all current v8 production sanitization, Firebase access, Trip permissions, branding, App Info branding and custom-background precedence unchanged.
-6. Bumped app shell, manifest and Service Worker release identity to v8.0.8.
+1. Fixed the root cause of the built in JoyGo Trip background rendering incorrectly: the default file path was being written directly into `--trip-bg-source` without the required CSS `url(...)` wrapper.
+2. Routed the built in default background through the same image preload, decode and `safeCssUrl()` commit path already used by uploaded Firebase backgrounds. This makes default and custom backgrounds use the same compositor ready rendering path.
+3. Added a lightweight emergency gradient only if the bundled default asset itself fails to load, avoiding recursive fallback retries.
+4. Left the Profile and Booking Documents transition engine untouched. The v7.9.20.24 compositor remains the authoritative animation implementation.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.9.
 
 ---
 

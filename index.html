@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.8">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.9">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -3801,7 +3801,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.8" !important;
+  content:"v8.0.9" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3822,7 +3822,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.8" !important;
+  content:"v8.0.9" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4630,7 +4630,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.8">
+  <link rel="manifest" href="manifest.json?release=8.0.9">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4638,8 +4638,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.8" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.8"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.9" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.9"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5847,7 +5847,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.8</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.9</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6506,7 +6506,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.8";
+const APP_VERSION = "8.0.9";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -8539,8 +8539,10 @@ function applyTripVisualTheme(data){
       loadAndCommit(candidate,candidate);
       return;
     }
-    document.documentElement.style.setProperty("--trip-bg-source",fallback);
-    tripBackgroundAppliedId=id;tripBackgroundAppliedSource=fallback;
+    // Default Trip branding is a file asset, not a CSS image function. Route it
+    // through the same preload/decode + safeCssUrl commit path used by uploaded
+    // Firebase backgrounds so --trip-bg-source always contains valid CSS.
+    loadAndCommit(fallback,fallback);
   };
   const loadAndCommit=(source,appliedSource=wantedSource)=>{
     if(token!==tripBackgroundApplyToken||!source)return;
@@ -8560,7 +8562,17 @@ function applyTripVisualTheme(data){
       }catch(error){}
       commit();
     };
-    img.onerror=applyFallback;
+    img.onerror=()=>{
+      if(token!==tripBackgroundApplyToken)return;
+      if(source===fallback&&!candidate){
+        const hue=tripHashHue(id);
+        const emergency=`linear-gradient(145deg,hsl(${hue} 38% 84%),hsl(${(hue+42)%360} 34% 92%))`;
+        document.documentElement.style.setProperty("--trip-bg-source",emergency);
+        tripBackgroundAppliedId=id;tripBackgroundAppliedSource=emergency;
+        return;
+      }
+      applyFallback();
+    };
     img.src=source;
   };
 
