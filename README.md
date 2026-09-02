@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.10**
+Current release: **v8.0.11**
 
 ## Latest release notes
 
-### v8.0.10
+### v8.0.11
 
-Fixed the zero Trip App Admin route. An authorised App Admin can still manage Creator access from the Entry lobby, but the route now opens System Admin directly without rendering the normal My page, hides Trip workspace chrome, and returns straight to the Entry lobby. The normal Profile root is no longer reachable while the account has no authorised Trip.
+Targeted Day Bar runtime recovery hotfix. The protected Day Bar CSS, geometry, sticky top, Day switching logic and transition timing are unchanged. Runtime sticky detection now uses the live compact-header height, stale metrics are recovered after iOS PWA visibility/pageshow/visualViewport changes, normal view handoff clears an orphaned chrome freeze, and Trip re-renders re-measure the sticky threshold.
 
 
 ## Production data boundary

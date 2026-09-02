@@ -1,3 +1,16 @@
+# v8.0.11 — JoyGo 樂遊 · Day Bar Runtime Recovery Hotfix
+
+## What changed
+
+1. Kept the protected Day Bar CSS, sticky geometry, Day switching and visual treatment unchanged.
+2. Changed the runtime stuck-state threshold to use the live compact-header height so iOS safe-area or Dynamic Island viewport changes cannot leave the Day Bar using a stale cached threshold.
+3. Hardened `refreshCollapseMetrics()` so it falls back to the live compact-header height before the old bare 58 px value.
+4. Added iOS PWA recovery on `visibilitychange`, `pageshow` and `visualViewport.resize`, including safe release of an orphaned `chromeFrozen` state when no Booking Documents transition is active.
+5. Normal app view changes now self-heal a stale chrome freeze, and `renderTrip()` re-measures the Day Bar after Firebase/edit re-renders replace itinerary DOM.
+6. No Firebase rules, Functions, Trip data schema or protected Day Bar CSS were changed.
+
+---
+
 # v8.0.10 — JoyGo 樂遊 · Zero Trip App Admin Route Isolation
 
 ## What changed

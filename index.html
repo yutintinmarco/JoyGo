@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.10">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.11">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -3807,7 +3807,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.10" !important;
+  content:"v8.0.11" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3828,7 +3828,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.10" !important;
+  content:"v8.0.11" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4636,7 +4636,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.10">
+  <link rel="manifest" href="manifest.json?release=8.0.11">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4644,8 +4644,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.10" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.10"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.11" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.11"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5853,7 +5853,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.10</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.11</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6512,7 +6512,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.10";
+const APP_VERSION = "8.0.11";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -10269,6 +10269,9 @@ function render(data,{includeSnacks=true}={}){
   // Refresh now indicator every minute. Cloud re-renders must not stack timers.
   if(nowIndicatorTimer) clearInterval(nowIndicatorTimer);
   nowIndicatorTimer=setInterval(updateNowIndicator, 60000);
+  // v8.0.11 · Firebase / edit re-renders can replace the Day Bar DOM after the
+  // previous sticky metric was measured. Re-measure before the next frame.
+  refreshCollapseMetrics();scheduleCollapseUpdate();
   tripEditDecorateItems();
   requestAnimationFrame(()=>perfLiteMark("firstTripPaint"));
 }
@@ -10297,7 +10300,12 @@ let collapseStickyTop=58;
 function refreshCollapseMetrics(){
   if(!dayTabsChromeEl){collapseStickyTop=58;dayTabsStickyShellEl?.classList.remove("is-stuck");return;}
   const stickyNode=dayTabsStickyShellEl||dayTabsChromeEl,top=parseFloat(getComputedStyle(stickyNode).top);
-  collapseStickyTop=Number.isFinite(top)?top:58;
+  const headerH=compactHeader?compactHeader.getBoundingClientRect().height:NaN;
+  // v8.0.11 · 58 is the bare compact-header height without the iOS safe area.
+  // Prefer the live sticky top, then the current compact-header height, so a
+  // Dynamic Island / PWA viewport change cannot leave a stale threshold behind.
+  collapseStickyTop=Number.isFinite(top)&&top>40?top
+                   :(Number.isFinite(headerH)&&headerH>40?headerH:58);
 }
 const viewElements={itinerary:ivw,snacks:svw,info:infvw,expenses:expvw,profile:profilevw};
 const viewButtons={itinerary:bti,snacks:bts,info:btinfo,expenses:btexp,profile:btprofile};
@@ -10476,7 +10484,12 @@ function updateCollapsingChrome(){
   const progress=clamp((y-start)/(end-start),0,1);
   const itineraryActive=currentAppView==="itinerary";
   const stickyNode=dayTabsStickyShellEl||dayTabsChromeEl,dayTabsRect=stickyNode?.getBoundingClientRect?.()||null;
-  const isStuck=!!(stickyNode&&itineraryActive&&dayTabsRect&&dayTabsRect.top<=collapseStickyTop+4&&y>4);
+  // v8.0.11 · Use the current compact-header height as the primary sticky
+  // threshold instead of trusting a metric cached before iOS changed its safe
+  // area / viewport. The rect reads stay together in the same read phase.
+  const liveHeaderH=compactHeader.getBoundingClientRect().height;
+  const stickyTop=liveHeaderH>40?liveHeaderH:collapseStickyTop;
+  const isStuck=!!(stickyNode&&itineraryActive&&dayTabsRect&&dayTabsRect.top<=stickyTop+6&&y>4);
   const eased=1-Math.pow(1-progress,2);
 
   // Write phase. --collapse-progress was unused anywhere in CSS, so Layer 2
@@ -10525,6 +10538,10 @@ function setView(v,{restoreScroll=true}={}){
   if(!viewElements[v]) v="itinerary";
   if(tripEditSession&&!["itinerary","snacks","info"].includes(v)){window.alert("編輯模式期間可切換行程、收藏及資料；支出或我的設定請先儲存或取消今次編輯。");return;}
   if(scrollShell) viewScrollPositions[currentAppView]=scrollShell.scrollTop;
+  // v8.0.11 · A normal tab/view handoff means the Booking Documents snapshot
+  // transition no longer owns the chrome. Recover from any interrupted iOS
+  // transition that left the Day Bar update gate frozen.
+  if(!infoNavigationTransitioning)chromeFrozen=false;
   currentAppView=v;
   try{sessionStorage.setItem("trip_current_view",v);}catch(e){}
 
@@ -15830,6 +15847,22 @@ scrollShell?.addEventListener("scroll",scheduleCollapseUpdate,{passive:true});
 scrollShell?.addEventListener("scroll",scheduleTripEditStickyChrome,{passive:true});
 window.addEventListener("resize",()=>{refreshCollapseMetrics();updateBottomNavIndicator();scheduleCollapseUpdate();},{passive:true});
 window.addEventListener("resize",()=>{tripEditRefreshStickyTop();scheduleTripEditStickyChrome();},{passive:true});
+// v8.0.11 · iOS can suspend a standalone PWA or change its visual viewport
+// without delivering the same resize sequence as a cold launch. Recover the
+// Day Bar threshold and frozen state whenever the app becomes visible again.
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible")return;
+  if(!infoNavigationTransitioning)chromeFrozen=false;
+  refreshCollapseMetrics();updateCollapsingChrome();
+},{passive:true});
+window.addEventListener("pageshow",()=>{
+  if(!infoNavigationTransitioning)chromeFrozen=false;
+  refreshCollapseMetrics();updateCollapsingChrome();
+},{passive:true});
+window.visualViewport?.addEventListener("resize",()=>{
+  if(!infoNavigationTransitioning)chromeFrozen=false;
+  refreshCollapseMetrics();scheduleCollapseUpdate();
+},{passive:true});
 async function requestPortraitOrientationLock(){
   try{
     const standalone=window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true;
