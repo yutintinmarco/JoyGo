@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.11**
+Current release: **v8.0.12**
 
 ## Latest release notes
 
-### v8.0.11
+### v8.0.12
 
-Targeted Day Bar runtime recovery hotfix. The protected Day Bar CSS, geometry, sticky top, Day switching logic and transition timing are unchanged. Runtime sticky detection now uses the live compact-header height, stale metrics are recovered after iOS PWA visibility/pageshow/visualViewport changes, normal view handoff clears an orphaned chrome freeze, and Trip re-renders re-measure the sticky threshold.
+Stability hotfix for multi-device travel use. Trip access now preserves the last server-confirmed role across cache-only listener handoffs until Firebase gives an authoritative server decision, preventing Owner/Admin media controls from disappearing transiently. Shared Expense split members are now canonical in `settings/expenses.defaultMembers`, with an atomic Trip-root legacy mirror and upgrade migration that preserves existing v8.0.11 member-manager edits. Global Save also performs one access revalidation and single retry before reporting a permission loss.
 
 
 ## Production data boundary

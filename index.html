@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.11">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.12">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -3807,7 +3807,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.11" !important;
+  content:"v8.0.12" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3828,7 +3828,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.11" !important;
+  content:"v8.0.12" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4636,7 +4636,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.11">
+  <link rel="manifest" href="manifest.json?release=8.0.12">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4644,8 +4644,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.11" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.11"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.12" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.12"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5853,7 +5853,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.11</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.12</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6512,7 +6512,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.11";
+const APP_VERSION = "8.0.12";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -10009,7 +10009,11 @@ function tripEditFriendlyError(error){
   const code=String(error?.code||"");
   if(code==="edit-revision-conflict")return"旅程喺你開始編輯後已被其他人或另一部裝置更新。今次未有覆蓋任何資料，請取消編輯並重新載入後再改。";
   if(code==="trip-global-locked")return"旅程已全域鎖定，目前只可查看。";
-  if(code==="insufficient-role"||code==="permission-denied")return"目前帳戶已冇權限儲存呢次編輯。";
+  if(code==="insufficient-role"||code==="permission-denied"||code==="firestore/permission-denied"){
+    const access=window.__appTripAccess||{},activeTripId=dataTripId(window.tripData),role=String(access.role||"");
+    if(String(access.tripId||"")===String(activeTripId||"")&&(role==="owner"||role==="admin"))return"Firebase 權限確認暫時未完成；今次編輯仍然保留，請稍後再按儲存。";
+    return"目前帳戶已冇權限儲存呢次編輯。";
+  }
   if(code==="auth-required")return"登入狀態已失效，請重新登入後再試。";
   if(code==="edit-trip-title-required")return"旅程名稱唔可以留空。";
   if(code==="edit-trip-date-invalid")return"旅程日期格式唔正確。";
@@ -10033,7 +10037,32 @@ function tripEditFriendlyError(error){
   if(String(code).startsWith("media-")||String(code).startsWith("storage/"))return itineraryMediaFriendlyError(error);
   return error?.message||"暫時未能儲存今次編輯。";
 }
-async function saveTripEditSession(){
+async function tripEditRevalidateAccessForRetry({timeoutMs=3200}={}){
+  const tripId=dataTripId(window.tripData),user=window.__appAuthUser||tripLibraryCurrentUser||null;
+  if(!tripId||!user?.uid)return false;
+  try{
+    const accessService=await import(`./assets/js/trip-access-service.js?release=${APP_VERSION}`);
+    const isAllowed=snapshot=>{
+      const access=snapshot||{};
+      return String(access.tripId||"")===String(tripId)&&access.serverConfirmed===true&&(access.role==="owner"||access.role==="admin");
+    };
+    return await new Promise(resolve=>{
+      let settled=false,timer=null;
+      const finish=value=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);window.removeEventListener("app-trip-access",onAccess);resolve(Boolean(value));};
+      const onAccess=event=>{
+        const access=event.detail||{};
+        if(String(access.tripId||"")!==String(tripId)||access.serverConfirmed!==true)return;
+        finish(access.role==="owner"||access.role==="admin");
+      };
+      window.addEventListener("app-trip-access",onAccess);
+      timer=setTimeout(()=>finish(false),Math.max(1200,Number(timeoutMs)||3200));
+      try{accessService.initTripAccess?.(tripId);accessService.refreshTripAccess?.();}catch(error){finish(false);}
+      const immediate=accessService.getTripAccess?.()||window.__appTripAccess||{};
+      if(immediate.serverConfirmed===true&&String(immediate.tripId||"")===String(tripId))finish(immediate.role==="owner"||immediate.role==="admin");
+    });
+  }catch(error){console.warn("Edit access revalidation",error);return false;}
+}
+async function saveTripEditSession({accessRetry=false}={}){
   if(!tripEditSession||tripEditSaving)return;
   if(tripEditCurrentRevision()!==Math.max(1,Number(tripEditSession.baseRevision)||1)){window.alert(tripEditFriendlyError({code:"edit-revision-conflict"}));return;}
   tripEditSaving=true;tripEditSyncHeader();
@@ -10082,6 +10111,16 @@ async function saveTripEditSession(){
       }catch(recoveryError){console.warn("Preserve partially uploaded Edit media",recoveryError);}
     }
     const partialDocuments=Array.isArray(error?.uploadedDescriptors)?error.uploadedDescriptors.filter(row=>row?.documentId):[];if(partialDocuments.length&&tripEditSession){try{const service=await tripEditService(),replacements=new Map();partialDocuments.forEach(row=>{const id=String(row?.documentId||"");if(id){replacements.set(id,row);if(!tripEditUploadedDocumentsForSession.some(existing=>String(existing?.documentId||"")===id))tripEditUploadedDocumentsForSession.push(row);}});service.replaceTripEditDraftDocumentDescriptors?.(tripEditSession,replacements);window.__tripEditPreviewData=service.applyTripEditDraftToTrip(tripEditSession,window.tripData);}catch(recoveryError){console.warn("Preserve partially uploaded Edit documents",recoveryError);}}
+    const code=String(error?.code||"");
+    if(!accessRetry&&tripEditSession&&(code==="insufficient-role"||code==="permission-denied"||code==="firestore/permission-denied")){
+      // v8.0.12 · Do not immediately discard a travel edit because an iOS/PWA
+      // listener handoff briefly lost its access state. Re-arm the canonical
+      // member listener, wait for one authoritative server decision, and retry
+      // the preserved draft once only when Owner/Admin is confirmed.
+      tripEditSaving=false;tripEditSyncHeader();
+      const recovered=await tripEditRevalidateAccessForRetry();
+      if(recovered&&tripEditSession)return saveTripEditSession({accessRetry:true});
+    }
     console.error("Save edit session",error);tripEditSaving=false;tripEditSyncHeader();window.alert(tripEditFriendlyError(error));
   }
 }

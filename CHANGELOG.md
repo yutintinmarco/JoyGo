@@ -1,3 +1,20 @@
+# v8.0.12 — JoyGo 樂遊 · Access & Expense Member Sync Stability Hotfix
+
+## What changed
+
+1. Fixed a Trip access race where a cache-only Firestore member snapshot could inherit a previous listener generation's `serverConfirmed` flag and temporarily downgrade Owner/Admin access to no role.
+2. Added Trip/UID listener-generation guards so stale member callbacks from an old Trip or auth binding cannot mutate the currently active Trip access state.
+3. Cache-only member misses now preserve the exact UID + Trip's last server-confirmed role until Firebase returns an authoritative server snapshot; a real server revoke or permission-denied still clears access immediately.
+4. Added one-time Global Save access recovery: a permission/role failure re-arms Trip access, waits for an authoritative Owner/Admin decision and retries the preserved edit draft once only.
+5. Made schema-2 Expense split members canonical in `trips/{tripId}/settings/expenses.defaultMembers`. The Trip-root `members` array is now maintained only as a backward-compatible mirror.
+6. Added `membersCanonicalVersion: 1` migration. Existing v8.0.11 Trip-root member edits win during the one-time upgrade so real user-created split members are not overwritten by older imported defaults.
+7. Add/remove split-member operations now update settings and the legacy Trip-root mirror atomically in one Firestore batch; realtime settings updates immediately refresh every connected device.
+8. Removed the per-device Google display-name fallback while access/settings are still hydrating, preventing a second phone from temporarily replacing a shared member list with only its own user name.
+9. Split-member management is now Owner/Admin only in the UI, matching the existing Firestore Rules.
+10. No Firestore Rules, Storage Rules, Functions, Trip schema, Day Bar, Maps, Transit, Booking Documents or Backup/Delete architecture changed.
+
+---
+
 # v8.0.11 — JoyGo 樂遊 · Day Bar Runtime Recovery Hotfix
 
 ## What changed
