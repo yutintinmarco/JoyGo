@@ -21,6 +21,7 @@ let latestUser = null;
 let memberResolved = false;
 let memberFromCache = false;
 let memberServerConfirmed = false;
+let memberListenerEpoch = 0;
 const subscribers = new Set();
 const LAST_KNOWN_ACCESS_KEY = "travel_last_known_trip_access_v1";
 
@@ -58,18 +59,24 @@ function validRole(value) {
 function computeAccess() {
   const memberRole = validRole(latestMemberData?.role);
   const lastKnownRole = latestUser?.uid && activeTripId ? getLastKnownRole(latestUser.uid, activeTripId) : null;
-  // Offline travel continuity: if Firestore cannot surface the cached member
-  // document, the last server-confirmed role for this exact UID + Trip may keep
-  // the cached workspace usable until reconnect. Online server denial always wins.
-  const role = latestUser ? (memberRole || (navigator.onLine === false ? lastKnownRole : null)) : null;
+  // v8.0.12 · A Firestore cache snapshot is not an authoritative revoke.
+  // Preserve the exact UID + Trip's most recent server-confirmed role while a
+  // replacement listener is attaching or only cache metadata is available.
+  // The role is cleared only by an authoritative server snapshot / explicit
+  // permission-denied response. Firestore / Storage Rules remain the write gate.
+  const provisionalRole = !memberServerConfirmed ? lastKnownRole : null;
+  const role = latestUser ? (memberRole || provisionalRole) : null;
+  const ready = !activeTripId || !latestUser || memberServerConfirmed || !!role || (navigator.onLine === false && memberResolved);
   currentAccess = {
     tripId: activeTripId,
     role,
     roleLabel: role ? ROLE_LABELS[role] : "",
     signedIn: !!latestUser,
-    source: memberRole ? "member-doc" : (role ? "last-known-access" : (latestUser ? "no-membership" : "signed-out")),
-    ready: !activeTripId || !latestUser || memberResolved,
-    fromCache: memberRole ? memberFromCache : (role ? true : memberFromCache),
+    source: memberRole
+      ? (memberServerConfirmed ? "member-doc" : "member-doc-pending")
+      : (role ? "last-known-access" : (latestUser ? (memberServerConfirmed ? "no-membership" : "membership-pending") : "signed-out")),
+    ready,
+    fromCache: memberServerConfirmed ? false : (role ? true : memberFromCache),
     serverConfirmed: memberServerConfirmed
   };
   const snapshot = { ...currentAccess };
@@ -81,13 +88,21 @@ function computeAccess() {
 }
 
 function resetMemberListener({ preserveState = false } = {}) {
+  memberListenerEpoch += 1;
   if (stopMember) stopMember();
   stopMember = null;
-  if (preserveState) return;
+  // Every replacement listener needs a fresh authoritative server decision.
+  // preserveState keeps the last usable member role visible during that gap,
+  // but never carries serverConfirmed=true into the new listener generation.
+  memberServerConfirmed = false;
+  if (preserveState) {
+    memberResolved = true;
+    memberFromCache = true;
+    return;
+  }
   latestMemberData = null;
   memberResolved = false;
   memberFromCache = false;
-  memberServerConfirmed = false;
 }
 
 function attachMemberListener({ preserveState = false } = {}) {
@@ -97,28 +112,40 @@ function attachMemberListener({ preserveState = false } = {}) {
     return;
   }
 
-  stopMember = onSnapshot(doc(db, "trips", activeTripId, "members", latestUser.uid), { includeMetadataChanges: true }, snapshot => {
+  const listenerTripId = activeTripId;
+  const listenerUid = latestUser.uid;
+  const listenerEpoch = memberListenerEpoch;
+  stopMember = onSnapshot(doc(db, "trips", listenerTripId, "members", listenerUid), { includeMetadataChanges: true }, snapshot => {
+    if (listenerEpoch !== memberListenerEpoch || listenerTripId !== activeTripId || listenerUid !== latestUser?.uid) return;
     memberResolved = true;
-    memberFromCache = snapshot.metadata?.fromCache === true;
-    if (!memberFromCache) memberServerConfirmed = true;
-    latestMemberData = snapshot.exists() ? snapshot.data() : null;
-    const resolvedRole=validRole(latestMemberData?.role);
-    if(memberServerConfirmed && latestUser?.uid && activeTripId){
-      if(resolvedRole) saveLastKnownRole(latestUser.uid,activeTripId,resolvedRole);
-      else clearLastKnownRole(latestUser.uid,activeTripId);
+    const fromCache = snapshot.metadata?.fromCache === true;
+    memberFromCache = fromCache;
+
+    if (fromCache) {
+      // A cache miss can occur while iOS/PWA listeners reattach. Never replace
+      // a previously verified role with null until the server has spoken.
+      if (snapshot.exists()) latestMemberData = snapshot.data();
+      computeAccess();
+      return;
     }
+
+    memberServerConfirmed = true;
+    latestMemberData = snapshot.exists() ? snapshot.data() : null;
+    const resolvedRole = validRole(latestMemberData?.role);
+    if (resolvedRole) saveLastKnownRole(listenerUid, listenerTripId, resolvedRole);
+    else clearLastKnownRole(listenerUid, listenerTripId);
     computeAccess();
   }, error => {
+    if (listenerEpoch !== memberListenerEpoch || listenerTripId !== activeTripId || listenerUid !== latestUser?.uid) return;
     memberResolved = true;
     memberFromCache = false;
     // Only an explicit permission-denied response is an authoritative revoke.
-    // A transient online/network listener error must never throw away a usable
-    // local Trip just because the device happens to be connected to Wi-Fi.
+    // Transient connectivity/listener errors preserve the last verified role.
     const denied = error?.code === "permission-denied";
     memberServerConfirmed = denied;
     if (denied) {
       latestMemberData = null;
-      if(latestUser?.uid&&activeTripId) clearLastKnownRole(latestUser.uid,activeTripId);
+      clearLastKnownRole(listenerUid, listenerTripId);
     } else console.warn("Trip member access listener", error);
     computeAccess();
   });
@@ -171,8 +198,8 @@ export function getRoleLabel(role = currentAccess.role) { return ROLE_LABELS[rol
 
 export function refreshTripAccess() {
   // Preserve the last verified access while the replacement listener attaches.
-  // This avoids a transient no-role frame during iOS cold-start refreshes; an
-  // authoritative server denial still clears access on the next callback.
+  // v8.0.12 explicitly resets serverConfirmed for the new listener generation,
+  // so a cache-only miss cannot masquerade as an authoritative online revoke.
   attachMemberListener({ preserveState: true });
   computeAccess();
 }

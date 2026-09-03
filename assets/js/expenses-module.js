@@ -470,6 +470,17 @@ function settingsFromExpensesConfig(config = {}) {
 }
 let members = [];
 let tripSettings = settingsFromExpensesConfig(expensesConfig);
+// v8.0.12 · Expense split members are canonical in settings/expenses.defaultMembers
+// for schemaVersion >= 2. The Trip-root members array remains a compatibility
+// mirror only, so older clients / backups can still understand the list.
+let expenseMembersSettingsResolved = false;
+let expenseMembersSettingsCanonical = false;
+let expenseMembersSettingsFallback = [];
+let expenseMembersCanonicalVersion = 0;
+let expenseMembersRootResolved = false;
+let expenseMembersRootFallback = [];
+let expenseMembersSchemaVersion = 2;
+let expenseMembersSource = "none";
 
 const form = document.getElementById("expenseForm");
 const dateInput = document.getElementById("date");
@@ -1152,8 +1163,8 @@ function updateTripStatusUi() {
   const readOnly = access.ready ? !canWriteExpenses() : true;
   setFormDisabled(globallyLocked || locked || readOnly || accessPending, (globallyLocked || locked) ? "locked" : (accessPending ? "access-pending" : (readOnly ? "read-only" : "")));
 
-  if (addMemberBtn) addMemberBtn.disabled = globallyLocked || locked || readOnly || accessPending;
-  if (memberNameInput) memberNameInput.disabled = globallyLocked || locked || readOnly || accessPending;
+  if (addMemberBtn) addMemberBtn.disabled = globallyLocked || locked || readOnly || accessPending || !isAdmin();
+  if (memberNameInput) memberNameInput.disabled = globallyLocked || locked || readOnly || accessPending || !isAdmin();
   if (saveRatesBtn) saveRatesBtn.disabled = globallyLocked || locked || !isAdmin();
   if (baseCurrencyInput) baseCurrencyInput.disabled = globallyLocked || locked || !isAdmin();
   if (ratesContainer) {
@@ -2101,10 +2112,11 @@ async function handleSignOut() {
 }
 
 function renderMemberManager() {
+  const canManage = isAdmin();
   memberList.innerHTML = members.map(member => `
     <div class="member-chip">
       <span>${safeEscape(member)}</span>
-      <button type="button" data-remove-member="${safeEscape(member)}">移除</button>
+      <button type="button" data-remove-member="${safeEscape(member)}" ${canManage ? "" : "disabled"}>移除</button>
     </div>
   `).join("");
 
@@ -2113,8 +2125,59 @@ function renderMemberManager() {
   });
 }
 
+function normalizeExpenseMembers(value) {
+  const result = [], seen = new Set();
+  (Array.isArray(value) ? value : []).forEach(row => {
+    const member = String(row || "").trim();
+    if (!member) return;
+    const key = member.toLocaleLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key); result.push(member);
+  });
+  return result;
+}
+function expenseMembersEqual(a, b) {
+  return JSON.stringify(normalizeExpenseMembers(a)) === JSON.stringify(normalizeExpenseMembers(b));
+}
+function applyExpenseMembers(nextMembers, { source = "cloud" } = {}) {
+  const next = normalizeExpenseMembers(nextMembers);
+  if (!next.length) return false;
+  const changed = !expenseMembersEqual(next, members);
+  expenseMembersSource = source;
+  if (!changed) return false;
+  members = next;
+  initMembers();
+  return true;
+}
+async function writeExpenseMembersCanonical(nextMembers, { targetTripId = tripId, user = currentUser } = {}) {
+  const next = normalizeExpenseMembers(nextMembers);
+  if (!targetTripId || !user?.uid || !next.length) {
+    const error = new Error("Expense members are not ready");
+    error.code = "expense-members-invalid";
+    throw error;
+  }
+  const batch = writeBatch(db);
+  batch.set(doc(db, "trips", targetTripId), { members: next }, { merge: true });
+  batch.set(doc(db, "trips", targetTripId, "settings", "expenses"), {
+    defaultMembers: next,
+    membersCanonicalVersion: 1,
+    updatedAt: serverTimestamp(),
+    updatedBy: user.uid
+  }, { merge: true });
+  await batch.commit();
+  expenseMembersSettingsResolved = true;
+  expenseMembersSettingsCanonical = true;
+  expenseMembersSettingsFallback = [...next];
+  expenseMembersCanonicalVersion = 1;
+  expenseMembersRootResolved = true;
+  expenseMembersRootFallback = [...next];
+  expenseMembersSource = "settings/expenses";
+  return next;
+}
 function initMembers() {
+  const previousPaidBy = paidByInput?.value || "";
   paidByInput.innerHTML = members.map(member => `<option value="${safeEscape(member)}">${safeEscape(member)}</option>`).join("");
+  if (previousPaidBy && members.includes(previousPaidBy)) paidByInput.value = previousPaidBy;
 
   if (quickPaidByInput) {
     const previousQuickPaidBy = quickPaidByInput.value;
@@ -2230,31 +2293,75 @@ async function ensureTripMembersAndSettings() {
   const data = tripDoc.data();
 
   // Phase 2B clean schema: role lives in trips/{tripId}/members/{uid}.
-  // Expense-specific settings move to trips/{tripId}/settings/expenses.
+  // Expense-specific settings live in trips/{tripId}/settings/expenses.
+  // v8.0.12 makes defaultMembers there the single canonical split-member list.
   if (Number(data.schemaVersion) >= 2) {
+    expenseMembersSchemaVersion = Number(data.schemaVersion) || 2;
     tripCreatorUid = data.createdBy || null;
     tripAllowedUids = Array.isArray(data.memberUids) ? uniqueStrings(data.memberUids) : [];
     tripAdminUids = [];
     adminEmailsCache = [];
     allowedEmailsCache = [];
-    members = Array.isArray(expensesConfig.defaultMembers) && expensesConfig.defaultMembers.length
-      ? expensesConfig.defaultMembers
-      : [currentUser.displayName || "Me"];
+    expenseMembersRootResolved = true;
+    expenseMembersRootFallback = normalizeExpenseMembers(data.members);
+    const portableMembers = normalizeExpenseMembers(expensesConfig.defaultMembers);
+    let cloudSettings = {};
+    let settingsMembers = [];
     try {
       const settingsSnap = await getDoc(doc(db, "trips", bindingTripId, "settings", "expenses"));
       if (!stillCurrent()) return false;
+      expenseMembersSettingsResolved = true;
       if (settingsSnap.exists()) {
-        const cloudSettings = settingsSnap.data() || {};
-        if (Array.isArray(cloudSettings.defaultMembers) && cloudSettings.defaultMembers.length) members = cloudSettings.defaultMembers;
+        cloudSettings = settingsSnap.data() || {};
+        settingsMembers = normalizeExpenseMembers(cloudSettings.defaultMembers);
+        expenseMembersSettingsFallback = [...settingsMembers];
+        expenseMembersCanonicalVersion = Math.max(0, Number(cloudSettings.membersCanonicalVersion) || 0);
+        expenseMembersSettingsCanonical = expenseMembersCanonicalVersion >= 1 && settingsMembers.length > 0;
         tripSettings = {
           ...tripSettings,
           ...cloudSettings,
           exchangeRates: { ...tripSettings.exchangeRates, ...(cloudSettings.exchangeRates || cloudSettings.defaultExchangeRates || {}) }
         };
         if (typeof cloudSettings.expenseLocked === "boolean") applyExpenseLockState(cloudSettings, { explicit:true });
-      }
+      } else { expenseMembersSettingsCanonical = false; expenseMembersSettingsFallback = []; expenseMembersCanonicalVersion = 0; }
     } catch (error) {
+      expenseMembersSettingsResolved = false;
       if (error?.code !== "permission-denied") console.warn("Expense settings read failed", error);
+    }
+
+    const role = String(phase2TripRole || window.__appTripAccess?.role || "");
+    const canManage = role === "owner" || role === "admin";
+    // Upgrade rule: old v8.0.11 member-manager edits were written to Trip root
+    // only. Until membersCanonicalVersion=1 exists, preserve that user-edited
+    // root list over an older imported settings.defaultMembers value. Once the
+    // marker exists, settings/expenses is authoritative across every device.
+    const settingsMarkedCanonical = expenseMembersCanonicalVersion >= 1 && settingsMembers.length > 0;
+    let chosenMembers = settingsMarkedCanonical ? settingsMembers
+      : (expenseMembersRootFallback.length ? expenseMembersRootFallback : (settingsMembers.length ? settingsMembers : portableMembers));
+    let source = settingsMarkedCanonical ? "settings/expenses"
+      : (expenseMembersRootFallback.length ? "trip-root-legacy" : (settingsMembers.length ? "settings/expenses-legacy" : (portableMembers.length ? "portable-default" : "none")));
+
+    // Only a verified manager may seed a genuinely empty shared list. A second
+    // device must never invent [current Google displayName] while cloud state is
+    // still hydrating, because that creates device-specific participant lists.
+    if (!chosenMembers.length && canManage) {
+      const seedName = String(currentUser.displayName || currentUser.email || "Member").trim();
+      if (seedName) { chosenMembers = [seedName]; source = "manager-bootstrap"; }
+    }
+    if (chosenMembers.length) applyExpenseMembers(chosenMembers, { source });
+
+    // Heal old schema-2 divergence only when writes are permitted. Keep both
+    // documents synchronized atomically; settings/expenses remains canonical.
+    const locked = data.globalLocked === true || cloudSettings.expenseLocked === true;
+    const rootMatches = expenseMembersEqual(expenseMembersRootFallback, chosenMembers);
+    const settingsMatch = expenseMembersEqual(settingsMembers, chosenMembers);
+    if (canManage && expenseMembersSettingsResolved && !locked && chosenMembers.length && (!rootMatches || !settingsMatch || expenseMembersCanonicalVersion < 1)) {
+      try {
+        await writeExpenseMembersCanonical(chosenMembers, { targetTripId: bindingTripId, user: currentUser });
+        if (!stillCurrent()) return false;
+      } catch (error) {
+        if (error?.code !== "permission-denied") console.warn("Expense member mirror migration", error);
+      }
     }
     return stillCurrent();
   }
@@ -2347,7 +2454,18 @@ function startExpenseSettingsListener() {
     lastExpenseSettingsSignature = signature;
     if (typeof data.expenseLocked === "boolean") applyExpenseLockState(data, { explicit:true });
     else applyExpenseLockState({}, { explicit:false });
+    expenseMembersSettingsResolved = true;
     if (snap.exists()) {
+      const settingsMembers = normalizeExpenseMembers(data.defaultMembers);
+      expenseMembersSettingsFallback = [...settingsMembers];
+      expenseMembersCanonicalVersion = Math.max(0, Number(data.membersCanonicalVersion) || 0);
+      expenseMembersSettingsCanonical = expenseMembersCanonicalVersion >= 1 && settingsMembers.length > 0;
+      if (expenseMembersSettingsCanonical) applyExpenseMembers(settingsMembers, { source:"settings/expenses" });
+      else if (expenseMembersSchemaVersion < 2 && settingsMembers.length) applyExpenseMembers(settingsMembers, { source:"settings/expenses-legacy" });
+      else if (expenseMembersRootResolved) {
+        if (expenseMembersRootFallback.length) applyExpenseMembers(expenseMembersRootFallback, { source:"trip-root-legacy" });
+        else if (settingsMembers.length) applyExpenseMembers(settingsMembers, { source:"settings/expenses-legacy" });
+      }
       tripSettings = {
         ...tripSettings,
         ...data,
@@ -2357,9 +2475,15 @@ function startExpenseSettingsListener() {
       renderRateEditor();
       renderExpenses();
       renderActiveExpensePanel();
+    } else {
+      expenseMembersSettingsCanonical = false;
+      expenseMembersSettingsFallback = [];
+      expenseMembersCanonicalVersion = 0;
+      if (expenseMembersSchemaVersion >= 2 && expenseMembersRootResolved && expenseMembersRootFallback.length) applyExpenseMembers(expenseMembersRootFallback, { source:"trip-root-legacy" });
     }
   }, error => {
     if (bindingEpoch !== expenseBindingEpoch) return;
+    expenseMembersSettingsResolved = false;
     markExpenseFreshnessUnavailable("settings");
     if (error?.code !== "permission-denied") {
       scheduleExpenseRealtimeRetry(bindingEpoch);
@@ -2387,14 +2511,17 @@ function startTripListener() {
     if (!expenseLockExplicit) applyExpenseLockState({}, { explicit:false });
     else updateTripStatusUi();
 
-    if (Array.isArray(data.members) && data.members.length > 0) {
-      const changed = JSON.stringify(data.members) !== JSON.stringify(members);
-      if (changed) {
-        const prev = paidByInput.value;
-        members = data.members;
-        initMembers();
-        if (members.includes(prev)) paidByInput.value = prev;
-      }
+    expenseMembersSchemaVersion = Number(data.schemaVersion) || expenseMembersSchemaVersion || 1;
+    expenseMembersRootResolved = true;
+    expenseMembersRootFallback = normalizeExpenseMembers(data.members);
+    if (expenseMembersSchemaVersion < 2) {
+      if (expenseMembersRootFallback.length) applyExpenseMembers(expenseMembersRootFallback, { source:"trip-root-legacy" });
+    } else if (expenseMembersSettingsResolved && !expenseMembersSettingsCanonical) {
+      // Before the v8.0.12 canonical marker exists, Trip-root members preserves
+      // user edits made by older clients. If root is empty, fall back to the
+      // legacy settings value only after both sources have resolved.
+      if (expenseMembersRootFallback.length) applyExpenseMembers(expenseMembersRootFallback, { source:"trip-root-legacy" });
+      else if (expenseMembersSettingsFallback.length) applyExpenseMembers(expenseMembersSettingsFallback, { source:"settings/expenses-legacy" });
     }
 
     if (Array.isArray(data.allowedUids)) tripAllowedUids = uniqueStrings(data.allowedUids);
@@ -2907,23 +3034,25 @@ async function restoreExpense(expenseId) {
 
 async function addMember() {
   if (!assertTripOpen()) return;
+  if (!isAdmin()) return alert("只有 Owner 或 Admin 可以管理分帳成員。");
   const name = memberNameInput.value.trim();
   if (!name) return alert("請輸入成員名稱。");
   if (members.some(m => m.toLowerCase() === name.toLowerCase())) return alert("成員名稱已存在。");
-  const next = [...members, name];
-  await setDoc(getTripDocRef(), { members: next }, { merge: true });
-  members = next; initMembers(); memberNameInput.value = "";
+  const next = normalizeExpenseMembers([...members, name]);
+  await writeExpenseMembersCanonical(next);
+  applyExpenseMembers(next, { source:"settings/expenses" }); memberNameInput.value = "";
   await logActivity("member_added", `${getCurrentUserDisplayName()} 新增成員 ${name}`, "member", name, { member: name });
 }
 
 async function removeMember(name) {
   if (!assertTripOpen()) return;
+  if (!isAdmin()) return alert("只有 Owner 或 Admin 可以管理分帳成員。");
   if (members.length <= 1) return alert("至少要保留一位成員。");
   const used = expenses.some(e => e.paidBy === name || (Array.isArray(e.sharedBy) && e.sharedBy.includes(name)));
   if (used) return alert("此成員已出現在歷史支出，不能移除。");
   const next = members.filter(m => m !== name);
-  await setDoc(getTripDocRef(), { members: next }, { merge: true });
-  members = next; initMembers();
+  await writeExpenseMembersCanonical(next);
+  applyExpenseMembers(next, { source:"settings/expenses" });
   await logActivity("member_removed", `${getCurrentUserDisplayName()} 移除成員 ${name}`, "member", name, { member: name });
 }
 
@@ -4746,10 +4875,9 @@ async function startExpenseCloudIfAllowed() {
 
   if (!phase2TripRole) {
     cloudExpenseStarted = false;
-    members = Array.isArray(expensesConfig.defaultMembers) && expensesConfig.defaultMembers.length
-      ? expensesConfig.defaultMembers
-      : [currentUser.displayName || "Me"];
-    initMembers();
+    // access.ready + role:null is now an authoritative no-membership state.
+    // Do not expose or invent a participant list for an unauthorised account.
+    members = []; expenseMembersSource = "none"; initMembers();
     renderRateEditor();
     renderAllowedEmails();
     renderAdminEmails();
@@ -4914,6 +5042,14 @@ window.__rebindExpensesForTrip = async function rebindExpensesModuleForTrip(next
   if (aboutTripIdText) aboutTripIdText.textContent = tripId;
 
   members = [];
+  expenseMembersSettingsResolved = false;
+  expenseMembersSettingsCanonical = false;
+  expenseMembersSettingsFallback = [];
+  expenseMembersCanonicalVersion = 0;
+  expenseMembersRootResolved = false;
+  expenseMembersRootFallback = [];
+  expenseMembersSchemaVersion = Number(nextTripData?.schemaVersion || nextTripData?.meta?.schemaVersion || 2) || 2;
+  expenseMembersSource = "none";
   allExpenses = [];
   expenses = [];
   lastExpenseRenderSignature = "";
