@@ -14,7 +14,7 @@
   <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.12">
+  <link rel="modulepreload" href="assets/js/trip-render-cache-service.js?release=8.0.13">
   <title id="page-title">JoyGo 樂遊</title>
   <script>
   // v7.7.5.0 · Performance Lite. Memory only: no Firebase reads/writes, no
@@ -3807,7 +3807,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
 #snacks-view::after,
 #info-view::after,
 #profile-view::after{
-  content:"v8.0.12" !important;
+  content:"v8.0.13" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -3828,7 +3828,7 @@ html:not(.theme-light):not(.theme-dark) .cloud-safety-strip{
   display:none !important;
 }
 body.expenses-view-active .expenses-module .expenses-app::after{
-  content:"v8.0.12" !important;
+  content:"v8.0.13" !important;
   display:block !important;
   width:100%;
   box-sizing:border-box;
@@ -4636,7 +4636,7 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
 </style>
             <link rel="apple-touch-icon" href="assets/icon/trip_icon.png">
   <link rel="icon" type="image/png" href="assets/icon/trip_icon.png">
-  <link rel="manifest" href="manifest.json?release=8.0.12">
+  <link rel="manifest" href="manifest.json?release=8.0.13">
   <meta name="apple-mobile-web-app-title" content="JoyGo 樂遊">
   <!-- v7.7.1.2: expenses.css is 144KB and every rule is scoped under
        .expenses-module, yet it used to block the very first paint of the
@@ -4644,8 +4644,8 @@ html.theme-dark .snacks-library-count,html:not(.theme-light):not(.theme-dark) .s
        priority without blocking paint; ensureExpensesStylesheet() flips it to
        media="all" before the 支出 view is ever mounted, so the styling is
        byte-for-byte identical by the time anything expenses-related renders. -->
-  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.12" media="print">
-  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.12"></noscript>
+  <link id="expenses-stylesheet" rel="stylesheet" href="assets/css/expenses.css?release=8.0.13" media="print">
+  <noscript><link rel="stylesheet" href="assets/css/expenses.css?release=8.0.13"></noscript>
 
 <style id="booking-documents-v79191-style">
 /* Phase 3E · Booking Documents native hierarchy / viewer hardening.
@@ -5853,7 +5853,7 @@ dialog.booking-document-viewer.is-edge-swiping{
             <p>Your Journey, Perfectly Planned.</p>
           </div>
         </div>
-        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.12</strong></div>
+        <div class="profile-meta-row" style="border-top:0;padding-top:2px;"><span>目前版本</span><strong>v8.0.13</strong></div>
         <div class="profile-meta-row"><span>資料架構</span><strong>Phase 2G.2</strong></div>
         <div class="profile-meta-row"><span>主要資料來源</span><strong id="app-data-source-label">Firebase / 本機快取</strong></div>
       </section>
@@ -6512,7 +6512,7 @@ dialog.booking-document-viewer.is-edge-swiping{
 </div>
 
 <script>
-const APP_VERSION = "8.0.12";
+const APP_VERSION = "8.0.13";
 const EXPENSES_MODULE_VERSION = APP_VERSION;
 window.APP_VERSION = APP_VERSION;
 let tripMapServicePromise=null,transitRouteServicePromise=null,tripEditServicePromise=null,airlineLogoServicePromise=null,tripDocumentServicePromise=null,tripMapController=null,tripMapScope="day",tripMapRenderEpoch=0,tripMapSelectedPoint=null;
@@ -9919,7 +9919,22 @@ document.getElementById("trip-edit-item-map-marker")?.addEventListener("click",(
 async function beginTripEditSession(){
   if(tripEditSession||!tripEditCanStart())return;
   const service=await tripEditService();
-  try{tripEditUploadedMediaForSession=[];tripEditUploadedDocumentsForSession=[];void tripDocumentService().then(docService=>docService.flushPendingTripDocumentCleanup?.({user:window.__appAuthUser||tripLibraryCurrentUser||null})).catch(()=>{});tripEditSession=service.createTripEditSession(window.tripData);window.__tripEditPreviewData=service.applyTripEditDraftToTrip(tripEditSession,window.tripData);tripEditSyncHeader();tripEditDecorateItems();renderSnacks(window.__tripEditPreviewData);}
+  try{
+    const previousTeam=activeTeam||"all",previousScroll=Math.max(0,Number(scrollShell?.scrollTop||0));
+    tripEditUploadedMediaForSession=[];tripEditUploadedDocumentsForSession=[];
+    void tripDocumentService().then(docService=>docService.flushPendingTripDocumentCleanup?.({user:window.__appAuthUser||tripLibraryCurrentUser||null})).catch(()=>{});
+    tripEditSession=service.createTripEditSession(window.tripData);
+    window.__tripEditPreviewData=service.applyTripEditDraftToTrip(tripEditSession,window.tripData);
+    // v8.0.13 · Itinerary media controls are created during render and depend on
+    // tripEditSession. The previous View Mode DOM was built while that session
+    // was null, so merely decorating edit buttons cannot create 「加入相片」.
+    // Re-render once in Edit Mode context, preserving the active Day internally
+    // and restoring the Team filter / scroll position after the synchronous pass.
+    render(window.__tripEditPreviewData,{includeSnacks:false});
+    if(previousTeam!=="all")applyTeam(previousTeam);
+    if(scrollShell&&Math.abs(scrollShell.scrollTop-previousScroll)>1)scrollShell.scrollTo({top:previousScroll,behavior:"auto"});
+    renderSnacks(window.__tripEditPreviewData);
+  }
   catch(error){console.warn("Begin edit session",error);window.alert("暫時未能開始編輯，請稍後再試。");}
 }
 function closeTripEditItemModal(){

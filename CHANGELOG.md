@@ -1,3 +1,15 @@
+# v8.0.13 — JoyGo 樂遊 · Edit Mode Media Render Hotfix
+
+## What changed
+
+1. Fixed a deterministic Edit Mode render gap where itinerary media controls were created only during `render()`, but opening Edit Mode previously created the edit session without rebuilding the itinerary DOM.
+2. Edit Mode now performs one synchronous itinerary rerender after `tripEditSession` is created, so items without existing photos immediately show 「加入相片」 and items with photos immediately show their edit media controls.
+3. Preserved the active Day through the existing render preservation logic, and explicitly restores the prior Team filter and scroll position after the Edit Mode rerender.
+4. No Firebase access, media upload/storage, Day Bar, Maps, Transit, Booking Documents, Backup or Delete architecture was changed.
+5. Bumped app shell, manifest and Service Worker release identity to v8.0.13.
+
+---
+
 # v8.0.12 — JoyGo 樂遊 · Access & Expense Member Sync Stability Hotfix
 
 ## What changed

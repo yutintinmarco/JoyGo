@@ -4,13 +4,13 @@ JoyGo 樂遊 is a private travel companion PWA for itinerary planning, maps, tra
 
 ## Production release
 
-Current release: **v8.0.12**
+Current release: **v8.0.13**
 
 ## Latest release notes
 
-### v8.0.12
+### v8.0.13
 
-Stability hotfix for multi-device travel use. Trip access now preserves the last server-confirmed role across cache-only listener handoffs until Firebase gives an authoritative server decision, preventing Owner/Admin media controls from disappearing transiently. Shared Expense split members are now canonical in `settings/expenses.defaultMembers`, with an atomic Trip-root legacy mirror and upgrade migration that preserves existing v8.0.11 member-manager edits. Global Save also performs one access revalidation and single retry before reporting a permission loss.
+Fixed the Edit Mode entry lifecycle so itinerary media controls are rebuilt immediately after an edit session is created. Items with no existing photos now show 「加入相片」 from the first Edit Mode render instead of waiting for an unrelated Firebase or UI rerender. The patch preserves the active Day, Team filter and scroll position and does not change Firebase access, media storage or Day Bar behaviour.
 
 
 ## Production data boundary
